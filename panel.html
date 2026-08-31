@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>OmniScript Data</title>
+  <link rel="stylesheet" href="panel.css" />
+</head>
+<body>
+  <header class="scope">
+    <label class="field">
+      <span>OmniScript</span>
+      <select id="target"></select>
+    </label>
+    <label class="field">
+      <span>Frame</span>
+      <select id="frame" title="Limit the list to one document, or leave on All frames"></select>
+    </label>
+    <label class="field checkbox" title="Child element components expose the same properties as their OmniScript. Off by default.">
+      <input id="show-nested" type="checkbox" />
+      <span>Nested</span>
+    </label>
+    <button id="rescan" class="icon-btn tiny" title="Look for frames and OmniScripts again">Rescan</button>
+    <button id="help" class="icon-btn tiny help-btn" title="What this tab does" aria-expanded="false">?</button>
+  </header>
+
+  <nav class="tabstrip" role="tablist">
+    <button id="tab-data" class="tab is-on" role="tab" aria-selected="true">Data</button>
+    <button id="tab-structure" class="tab" role="tab" aria-selected="false">Structure</button>
+    <button id="tab-actions" class="tab" role="tab" aria-selected="false">
+      Remote actions <span id="actions-count" class="badge" hidden>0</span>
+    </button>
+  </nav>
+
+  <!-- ------------------------------------------------------ Data tab -->
+  <section id="view-data" class="view" role="tabpanel">
+    <header class="toolbar">
+      <div class="bar">
+        <button id="pause" class="icon-btn" title="Pause live updates">Pause</button>
+        <button id="refresh" class="icon-btn" title="Read the property now">Refresh</button>
+
+        <label class="field">
+          <span>Property</span>
+          <input id="prop" type="text" value="jsonDataStr" spellcheck="false" size="12" />
+        </label>
+
+        <label class="field">
+          <span>Every</span>
+          <select id="interval">
+            <option value="250">250 ms</option>
+            <option value="500" selected>500 ms</option>
+            <option value="1000">1 s</option>
+            <option value="2000">2 s</option>
+            <option value="0">Manual</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="bar">
+        <div class="seg" role="group" aria-label="View">
+          <button id="view-tree" class="seg-btn is-on">Tree</button>
+          <button id="view-raw" class="seg-btn">Raw</button>
+        </div>
+
+        <input id="filter" type="search" placeholder="Filter keys and values" spellcheck="false" />
+
+        <button id="expand" class="icon-btn" title="Expand everything">Expand all</button>
+        <button id="collapse" class="icon-btn" title="Collapse to the top level">Collapse all</button>
+        <button id="copy" class="icon-btn">Copy JSON</button>
+        <button id="download" class="icon-btn" title="Writes the payload to a file. It may contain org data — handle it accordingly.">Save file</button>
+        <button id="select" class="icon-btn" title="Reveal the element in Elements and expose it as $omni">Reveal element</button>
+      </div>
+    </header>
+
+    <main id="viewport" class="viewport" tabindex="0"></main>
+  </section>
+
+  <!-- ------------------------------------------------- Structure tab -->
+  <section id="view-structure" class="view" role="tabpanel" hidden>
+    <header class="toolbar">
+      <div class="bar">
+        <button id="struct-refresh" class="icon-btn">Refresh</button>
+
+        <label class="field">
+          <span>Definition</span>
+          <input id="struct-prop" type="text" value="jsonDef" spellcheck="false" size="10" />
+        </label>
+
+        <input id="struct-filter" type="search" placeholder="Filter by name, type or label" spellcheck="false" />
+
+        <button id="struct-expand" class="icon-btn" title="Expand every section">Expand all</button>
+        <button id="struct-collapse" class="icon-btn" title="Collapse every section">Collapse all</button>
+
+        <label class="field checkbox">
+          <input id="struct-actions-only" type="checkbox" />
+          <span>Actions only</span>
+        </label>
+      </div>
+    </header>
+
+    <div class="split">
+      <div id="struct-list" class="log-list"></div>
+      <div id="struct-detail" class="log-detail"></div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------- Remote actions tab -->
+  <section id="view-actions" class="view" role="tabpanel" hidden>
+    <header class="toolbar">
+      <div class="bar">
+        <button id="log-record" class="icon-btn is-on" title="Stop or resume capturing">Recording</button>
+        <button id="log-clear" class="icon-btn">Clear</button>
+
+        <input id="log-filter" type="search" placeholder="Filter by class, method or URL" spellcheck="false" />
+
+        <label class="field checkbox">
+          <input id="log-only-omni" type="checkbox" checked />
+          <span>OmniStudio only</span>
+        </label>
+
+        <label class="field checkbox">
+          <input id="log-preserve" type="checkbox" />
+          <span>Preserve on reload</span>
+        </label>
+
+        <button id="log-export" class="icon-btn" title="Writes the captured calls to a file. They may contain org data — handle it accordingly.">Export</button>
+      </div>
+    </header>
+
+    <div class="split">
+      <div id="log-list" class="log-list"></div>
+      <div id="log-detail" class="log-detail"></div>
+    </div>
+  </section>
+
+  <div id="help-overlay" class="help-overlay" hidden>
+    <div class="help-card" role="dialog" aria-label="Help">
+      <button id="help-close" class="icon-btn tiny help-close" title="Close (Esc)">✕</button>
+      <div id="help-body"></div>
+    </div>
+  </div>
+
+  <footer class="status">
+    <span id="status-left">Waiting for the first read…</span>
+    <span id="status-right"></span>
+    <span class="disclaimer">Unofficial tool · not affiliated with Salesforce</span>
+  </footer>
+
+  <script src="jsontree.js"></script>
+  <script src="split.js"></script>
+  <script src="targets.js"></script>
+  <script src="actions.js"></script>
+  <script src="structure.js"></script>
+  <script src="panel.js"></script>
+</body>
+</html>

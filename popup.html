@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  :root {
+    --bg: #ffffff; --fg: #202124; --dim: #5f6368;
+    --line: #e0e0e0; --accent: #1a73e8; --key-bg: #f1f3f4;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1f1f1f; --fg: #e8eaed; --dim: #9aa0a6;
+      --line: #3c3c3c; --accent: #8ab4f8; --key-bg: #2b2b2b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    width: 300px; margin: 0; padding: 14px 16px 12px;
+    background: var(--bg); color: var(--fg);
+    font: 13px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  h1 { margin: 0 0 2px; font-size: 14px; }
+  .sub { margin: 0 0 12px; color: var(--dim); font-size: 12px; }
+  ol { margin: 0; padding-left: 18px; }
+  li { margin-bottom: 6px; }
+  kbd {
+    display: inline-block; padding: 1px 5px; border: 1px solid var(--line);
+    border-bottom-width: 2px; border-radius: 3px; background: var(--key-bg);
+    font-family: var(--mono); font-size: 11px;
+  }
+  .note {
+    margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line);
+    color: var(--dim); font-size: 12px;
+  }
+  a { color: var(--accent); }
+  .foot {
+    margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--line);
+    display: flex; justify-content: space-between; gap: 8px;
+    color: var(--dim); font-size: 11px;
+  }
+</style>
+</head>
+<body>
+  <h1>OmniScript Data Inspector</h1>
+  <p class="sub">This tool lives in DevTools, not here.</p>
+
+  <ol>
+    <li>Open the page with your OmniScript.</li>
+    <li>Open DevTools — <kbd>F12</kbd>, or <kbd>⌥</kbd><kbd>⌘</kbd><kbd>I</kbd> on a Mac.</li>
+    <li>Pick the <strong>OmniScript</strong> tab, next to Elements and Console.</li>
+  </ol>
+
+  <p class="note">
+    It can only read the page while DevTools is open. To catch remote actions fired
+    during page load, reload with DevTools already open.
+  </p>
+
+  <div class="foot">
+    <span>Unofficial · not affiliated with Salesforce</span>
+    <a id="support" href="https://buycoffee.to/mskrz" target="_blank" rel="noopener">Buy me a coffee ☕</a>
+  </div>
+</body>
+</html>
