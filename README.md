@@ -21,6 +21,33 @@ From the [Chrome Web Store](https://chromewebstore.google.com/), or load unpacke
 2. Open a page running an OmniScript, open DevTools (`F12`), and select the
    **OmniScript** tab.
 
+## Architecture
+
+No build step: every file under `src/` is a native ES module (`import`/
+`export`), loaded by one `<script type="module">` in `panel.html` — no
+bundler, no transpiler, no runtime dependencies.
+
+Two layers, one-directional:
+
+- **`src/core/`** — pure domain logic (decoding remote-action payloads,
+  reading an OmniScript's structure, formatting JSON tree rows). Plain
+  functions on plain objects, no DOM, no `chrome.*`. Fully unit-tested.
+- **`src/ui/`** — DOM rendering and `chrome.devtools.*` wiring, one file per
+  tab plus the shared scope bar and panel shell. Imports from `src/core/`
+  freely; `src/core/` never imports from here.
+
+One exception: the `hostScan` / `hostFetch` / `frameScan` functions in
+`src/ui/targets.js` are shipped into the inspected page by stringifying them
+(`chrome.devtools.inspectedWindow.eval`), so they stay fully self-contained —
+no imports, no closures over anything outside their own body.
+
+```sh
+npm install
+npm test          # Jest: core unit tests, jsdom UI tests, a boot/wiring test
+npm run lint       # ESLint
+npm run package    # zip the shipped files for the Chrome Web Store
+```
+
 ## Permissions and privacy
 
 This extension declares **no permissions and no host access**. It uses only the

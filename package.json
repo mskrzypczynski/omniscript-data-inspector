@@ -1,0 +1,22 @@
+{
+  "name": "omniscript-data-inspector",
+  "version": "1.3.1",
+  "private": true,
+  "type": "module",
+  "description": "Chrome DevTools panel for inspecting Salesforce OmniStudio OmniScripts.",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "package": "node scripts/package-extension.mjs"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "jest": "^30.5.1",
+    "jest-environment-jsdom": "^30.5.1"
+  }
+}

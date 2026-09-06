@@ -145,11 +145,9 @@
     <span class="disclaimer">Unofficial tool · not affiliated with Salesforce</span>
   </footer>
 
-  <script src="jsontree.js"></script>
-  <script src="split.js"></script>
-  <script src="targets.js"></script>
-  <script src="actions.js"></script>
-  <script src="structure.js"></script>
-  <script src="panel.js"></script>
+  <!-- Real ES modules: app.js imports everything it needs (src/ui/*, which in
+       turn imports src/core/*), so the browser's module graph resolves the
+       load order instead of this list having to get it right by hand. -->
+  <script type="module" src="src/ui/app.js"></script>
 </body>
 </html>
