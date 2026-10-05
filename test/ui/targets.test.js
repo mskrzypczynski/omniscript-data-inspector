@@ -98,3 +98,70 @@ describe('Targets host selection across a rescan', () => {
     expect(Targets.selected().label).toBe('c-quote-B');
   });
 });
+
+describe('hostHighlight (runs inside the inspected page)', () => {
+  let hostHighlight;
+  beforeAll(async () => { ({ hostHighlight } = await import('../../src/ui/targets.js')); });
+  afterEach(() => { document.body.innerHTML = ''; delete window.__omniHosts; });
+
+  function pageWithHost() {
+    const host = document.createElement('div');
+    const shadow = host.attachShadow({ mode: 'open' });
+    shadow.innerHTML = '<section><input data-omni-key="Field1" /><span data-lwc-x="lwc-123"></span></section>';
+    document.body.appendChild(host);
+    window.__omniHosts = [host];
+    return host;
+  }
+
+  it('finds an element by lwcId inside an open shadow root', () => {
+    pageWithHost();
+    expect(hostHighlight(0, 'lwc-123', '', true)).toEqual({ ok: true, found: true, visible: false });
+  });
+
+  it('falls back to the element name, and reports not found', () => {
+    pageWithHost();
+    expect(hostHighlight(0, 'nope', 'Field1', true).found).toBe(true);
+    expect(hostHighlight(0, 'nope', 'Other', true).found).toBe(false);
+    expect(hostHighlight(5, 'lwc-123', '', true).found).toBe(false);
+  });
+
+  it('draws an outline when the element has a size, and removes it when asked', () => {
+    const host = pageWithHost();
+    const target = host.shadowRoot.querySelector('span');
+    target.getBoundingClientRect = () => ({ left: 5, top: 6, width: 40, height: 20 });
+    expect(hostHighlight(0, 'lwc-123', '', true).visible).toBe(true);
+    expect(document.getElementById('__omni_inspector_outline')).not.toBeNull();
+    hostHighlight(0, '', '', false);
+    expect(document.getElementById('__omni_inspector_outline')).toBeNull();
+  });
+});
+
+describe('hostPeek (runs inside the inspected page)', () => {
+  let hostPeek;
+  beforeAll(async () => { ({ hostPeek } = await import('../../src/ui/targets.js')); });
+  afterEach(() => { delete window.__omniHosts; delete window.__omniPeekCache; });
+
+  it('reads one field of a JSON string property', () => {
+    window.__omniHosts = [{ jsonDef: '{"asIndex":3,"children":[]}' }];
+    expect(hostPeek(0, 'jsonDef', 'asIndex')).toEqual({ ok: true, value: 3 });
+  });
+
+  it('parses an unchanged string once and reuses the result', () => {
+    const spy = jest.spyOn(JSON, 'parse');
+    window.__omniHosts = [{ jsonDef: '{"asIndex":3}' }];
+    hostPeek(0, 'jsonDef', 'asIndex');
+    hostPeek(0, 'jsonDef', 'asIndex');
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    window.__omniHosts = [{ jsonDef: '{"asIndex":4}' }];
+    expect(hostPeek(0, 'jsonDef', 'asIndex').value).toBe(4);
+    expect(spy).toHaveBeenCalledTimes(2);
+    spy.mockRestore();
+  });
+
+  it('answers null for a missing host or field', () => {
+    window.__omniHosts = [{ jsonDef: '{}' }];
+    expect(hostPeek(5, 'jsonDef', 'asIndex').value).toBeNull();
+    expect(hostPeek(0, 'jsonDef', 'asIndex').value).toBeNull();
+  });
+});

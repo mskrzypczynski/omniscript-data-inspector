@@ -5,16 +5,25 @@
  * with the Structure tab — this file only asks for the selected host's
  * payload and draws it. */
 
-import { isContainer, addAllPaths, SEP } from '../core/json-tree-model.js';
+import { addAllPaths } from '../core/json-tree-model.js';
 import { formatBytes } from '../core/targets-model.js';
-import { renderJsonTree } from './json-tree-view.js';
+import { orderedChanges, changedVisible, stepChange, ancestorsOf, valueAt } from '../core/changes.js';
+import { dataSegments, treePathFor, ownerIndex } from '../core/path-links.js';
+import { renderJsonTree, copyValueOf } from './json-tree-view.js';
+import { notice } from './notice.js';
+import { renderWatchStrip } from './data/watch-strip.js';
+import { renderComparePanel } from './data/compare-panel.js';
+import { openRowMenu } from './data/row-menu.js';
+import { buildRawBlock, stepMark } from './data/raw-view.js';
+import { copyWithToast, copyWithButton } from './clipboard.js';
+import { toast } from './toast.js';
 import { Targets } from './targets.js';
 import { attachPropPicker } from './prop-picker.js';
-
-/* How long a change stays marked. Without this the amber and the dot on
- * collapsed branches lasted exactly one render — at a 500 ms poll they were
- * gone before you could look at them. */
-const HIGHLIGHT_MS = 3000;
+import { Nav } from './nav.js';
+import { Mask } from './mask-setting.js';
+import { applyPayload, resetPayload as resetPayloadFields, stopTracking, startTracking } from '../core/payload-state.js';
+import { Advanced } from './advanced.js';
+import { Shared } from './shared.js';
 
 /* Constant poll period; manual mode turns polling off instead. */
 const POLL_MS = 1000;
@@ -36,6 +45,28 @@ const state = {
   expandedText: new Set(),
   changed: new Set(),
   changedBranch: new Set(),
+  pins: [], // watched tree paths, in the order they were added
+  watchSig: '',
+  watchPrev: {},
+  history: [], // last payloads read: { raw, time }
+  compareOpen: false,
+  compareA: null, // snapshots chosen in the compare panel; null picks the last two
+  compareB: null,
+  compareSig: '',
+  rawWrap: false,
+  rawLines: 0,
+  rawMatches: 0,
+  rawCursor: -1,
+  touched: new Set(), // changed at some point since the marks were cleared
+  changedOnly: false,
+  before: new Map(), // marked path -> its value before the first change since the marks were cleared
+  focus: null, // the row jumped to: next/previous change, or from Structure
+  scrollToFocus: false,
+  ownersRequested: false, // asked Structure for the definition since the last scope change
+  hoverPath: null, // the row the pointer is over, for the c shortcut
+  scrollTo: null, // set by the last tree drawn: brings a path into view, windowed or not
+  pendingReveal: null, // key list from the Structure tab, applied once data is read
+  note: null,
   lastUpdate: null,
   changedAt: 0,
   seeded: false
@@ -58,7 +89,8 @@ function schedule() {
 /* What the tree on screen depends on. A poll that leaves it unchanged must not
  * rebuild the DOM: that drops focus and hover from the copy buttons. */
 function viewSignature() {
-  return [state.raw, state.changed.size, state.stale, state.scanError, !!Targets.selected()].join('\u0000');
+  return [state.rawVersion, state.changed.size, state.touched.size, state.stale, state.scanError,
+    !!Targets.selected()].join('\u0000');
 }
 
 function refreshView(before) {
@@ -116,84 +148,106 @@ function isInteracting() {
 }
 
 function apply(raw) {
-  if (raw === null || raw === undefined) {
-    state.raw = null;
-    state.data = undefined;
-    state.parseError = null;
-    state.changed.clear();
-    state.changedBranch.clear();
-    state.changedAt = 0;
-    return;
-  }
-  if (raw === state.raw) {
-    if (state.changedAt && Date.now() - state.changedAt > HIGHLIGHT_MS) {
-      state.changed.clear();
-      state.changedBranch.clear();
-      state.changedAt = 0;
-    }
-    return;
-  }
-
-  const previous = state.data;
-  state.raw = raw;
-
-  try {
-    state.data = JSON.parse(raw);
-    state.parseError = null;
-  } catch (e) {
-    state.data = undefined;
-    state.parseError = e.message;
-  }
-
-  state.changed = new Set();
-  state.changedBranch = new Set();
-  if (state.parseError === null && previous !== undefined) {
-    diff(previous, state.data, '', state.changed);
-    state.changed.forEach((path) => {
-      const parts = path.split(SEP);
-      for (let i = parts.length - 1; i > 0; i--) {
-        state.changedBranch.add(parts.slice(0, i).join(SEP));
-      }
-      state.changedBranch.add('');
-    });
-  }
-
-  if (!state.seeded && state.data !== undefined) {
-    seedExpansion(state.data);
-    state.seeded = true;
-  }
-
-  state.lastUpdate = new Date();
-  state.changedAt = state.changed.size ? Date.now() : 0;
-}
-
-function seedExpansion(value) {
-  state.expanded.add('');
-  if (!isContainer(value)) return;
-  Object.keys(value).slice(0, 200).forEach((key) => state.expanded.add(key));
-}
-
-function diff(a, b, path, out) {
-  if (out.size > 800) return;
-  const containerA = isContainer(a);
-  const containerB = isContainer(b);
-  if (!containerA && !containerB) { if (a !== b) out.add(path); return; }
-  if (containerA !== containerB || Array.isArray(a) !== Array.isArray(b)) { out.add(path); return; }
-
-  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
-  keys.forEach((key) => {
-    const childPath = path ? path + SEP + key : key;
-    if (!(key in a) || !(key in b)) { out.add(childPath); return; }
-    diff(a[key], b[key], childPath, out);
-  });
+  /* Marks, "was" values and the comparison history only serve the Advanced
+   * controls, so they are collected only while those are shown. */
+  applyPayload(state, raw, new Date(), Advanced.on());
 }
 
 /* ------------------------------------------------------------------ *
  * Rendering
  * ------------------------------------------------------------------ */
 
+/* The marked paths in tree order. Walking a payload every second just to count
+ * them is wasteful, so the answer is reused until the payload or the marks
+ * change. */
+let changeCache = { data: null, touched: null, size: -1, list: [] };
+
+function changeList() {
+  if (state.data === undefined) return [];
+  if (changeCache.data !== state.data || changeCache.touched !== state.touched || changeCache.size !== state.touched.size) {
+    changeCache = {
+      data: state.data, touched: state.touched, size: state.touched.size,
+      list: orderedChanges(state.data, state.touched)
+    };
+  }
+  return changeCache.list;
+}
+
+/* Which rows can jump to Structure: those whose key belongs to an element of
+ * the definition (itself, or the nearest element above it). The definition is
+ * fetched once in the background when this tab first needs it; until it is
+ * there, or if the script has none, no row offers the button. */
+let ownerCache = { elements: null, data: null, lookup: null };
+
+function ownerLookup() {
+  if (!state.ownersRequested) {
+    state.ownersRequested = true;
+    Shared.ensureElements(() => { if (state.active) render(); });
+  }
+  const elements = Shared.elements();
+  if (!elements.length || state.data === undefined) return null;
+  /* The index depends only on these two references; rebuilding it on every
+   * redraw walked the payload once per element without a JSONPath. */
+  if (ownerCache.elements !== elements || ownerCache.data !== state.data) {
+    ownerCache = { elements, data: state.data, lookup: ownerIndex(elements, state.data) };
+  }
+  return ownerCache.lookup;
+}
+
+function jumpLabel(owners, path) {
+  if (!owners || !path) return null;
+  const hit = owners(dataSegments(state.data, path));
+  if (!hit) return null;
+  return hit.exact
+    ? `Select ${hit.element.name} in the Structure tab`
+    : `Select ${hit.element.name} in the Structure tab (the element this value sits under)`;
+}
+
+function consumeReveal() {
+  if (!state.pendingReveal || state.data === undefined || state.parseError) return;
+  const hit = treePathFor(state.data, state.pendingReveal);
+  state.pendingReveal = null;
+
+  if (!hit.found) {
+    showNote('Not in the data yet', 'That element has no value on this property right now.');
+    return;
+  }
+
+  clearViewFilters();
+  ancestorsOf(hit.path).forEach((path) => state.expanded.add(path));
+  state.expanded.add(hit.path);
+  state.focus = hit.path;
+  state.scrollToFocus = true;
+  if (!hit.exact) showNote('Showing the nearest parent', 'The element itself has no value yet.');
+}
+
+let noteTimer = null;
+
+function showNote(title, body) {
+  state.note = { title, body };
+  clearTimeout(noteTimer);
+  noteTimer = setTimeout(() => { state.note = null; render(); }, 4000);
+}
+
+function clearViewFilters() {
+  state.filter = '';
+  el.filter.value = '';
+  state.changedOnly = false;
+  el.changedOnly.checked = false;
+  if (state.view !== 'tree') setView('tree', false);
+}
+
+function scrollToFocus() {
+  if (!state.scrollToFocus) return;
+  state.scrollToFocus = false;
+  if (state.scrollTo) state.scrollTo(state.focus);
+}
+
 function render() {
+  consumeReveal();
   renderStatus();
+  renderWatch();
+  renderCompare();
 
   /* Rebuilding the tree drops the user's selection, so a poll must not do it
    * while they are selecting text or using a copy button. Wait until they stop. */
@@ -233,50 +287,67 @@ function render() {
       'Showing the last data read. It will refresh when an OmniScript is found again.', false));
   }
 
+  if (state.note) viewport.appendChild(notice(state.note.title, state.note.body, false));
+
   if (state.view === 'raw') {
     viewport.appendChild(rawBlock(pretty()));
+    renderStatus(); // line and match counts are known only now
     return;
   }
 
+  if (state.changedOnly && !changeList().length) {
+    viewport.appendChild(notice('No changes yet',
+      'Nothing has changed since the marks were cleared. Values that change while this tab is open are listed here.', false));
+    return;
+  }
+
+  const owners = ownerLookup();
   const result = renderJsonTree(viewport, state.prop, state.data, {
     expanded: state.expanded,
     expandedText: state.expandedText,
     changed: state.changed,
     changedBranch: state.changedBranch,
+    touched: state.touched,
+    before: state.before,
+    focus: state.focus,
+    only: state.changedOnly ? changedVisible(state.data, state.touched) : null,
     filter: state.filter,
+    transform: Mask.apply,
+    onJump: (path) => Nav.go('structure', { segments: dataSegments(state.data, path) }),
+    jumpLabel: (path) => jumpLabel(owners, path),
+    pinned: new Set(state.pins),
+    onPin: togglePin,
+    onContext: rowMenu,
     onToggle: render
   });
+  state.scrollTo = result.scrollTo;
 
   if (!result.matched) {
-    viewport.appendChild(notice('No matches', `Nothing in this payload matches "${state.filter}".`, false));
+    viewport.appendChild(notice('No matches', state.filter
+      ? `Nothing ${state.changedOnly ? 'changed ' : ''}in this payload matches "${state.filter}".`
+      : 'Nothing to show.', false));
     return;
   }
+
+  scrollToFocus();
 
   if (result.truncated) {
     viewport.appendChild(notice('Output trimmed',
       `Showing the first ${result.rows} rows. Filter the payload or switch to Raw to see the rest.`, false));
   }
-}
-
-function rawBlock(text) {
-  const pre = document.createElement('pre');
-  pre.className = 'raw';
-  pre.textContent = text;
-  return pre;
-}
-
-function notice(title, body, isError) {
-  const box = document.createElement('div');
-  box.className = `notice${isError ? ' is-error' : ''}`;
-  if (title) {
-    const heading = document.createElement('h2');
-    heading.textContent = title;
-    box.appendChild(heading);
+  if (result.windowed) {
+    el.statusLeft.title = `${result.rows} rows, drawn a window at a time`;
   }
-  const p = document.createElement('div');
-  p.textContent = body;
-  box.appendChild(p);
-  return box;
+}
+
+/* The raw view for the current text; the line and match counts it found are
+ * kept for the status bar and for walking matches. */
+function rawBlock(text) {
+  const { node, lines, matches } = buildRawBlock(text, { query: state.filter, wrap: state.rawWrap });
+  state.rawLines = lines;
+  state.rawMatches = matches;
+  state.rawCursor = -1;
+  return node;
 }
 
 function emptyNotice() {
@@ -335,6 +406,14 @@ function renderStatus() {
       : (state.live ? 'Live' : 'Manual');
   if (state.lastUpdate) right += ` · changed ${state.lastUpdate.toLocaleTimeString()}`;
   if (state.changed.size) right += ` · ${state.changed.size} value(s) updated`;
+  if (state.view === 'raw' && state.data !== undefined) {
+    right += ` · ${state.rawLines} lines`;
+    if (state.filter.trim()) right += ` · ${state.rawMatches} match${state.rawMatches === 1 ? '' : 'es'}`;
+  }
+  const marked = changeList().length;
+  el.changeCount.textContent = marked ? `${marked} marked` : 'none marked';
+  el.prevChange.disabled = marked === 0;
+  el.nextChange.disabled = marked === 0;
   el.statusRight.textContent = right;
 }
 
@@ -349,50 +428,38 @@ function pretty() {
 }
 
 function resetPayload() {
-  state.raw = null;
-  state.data = undefined;
-  state.parseError = null;
-  state.seeded = false;
-  state.stale = false;
-  state.expanded = new Set(['']);
-  state.expandedText = new Set();
-  state.changed = new Set();
-  state.changedBranch = new Set();
+  resetPayloadFields(state);
 }
 
 /* ------------------------------------------------------------------ *
  * Controls
  * ------------------------------------------------------------------ */
 
-function copyText(text, button, restore) {
-  if (!text) return;
-  navigator.clipboard.writeText(text).then(() => {
-    flash(button, 'Copied', restore);
-  }, () => {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    document.body.appendChild(textarea);
-    textarea.select();
-    document.execCommand('copy');
-    textarea.remove();
-    flash(button, 'Copied', restore);
-  });
-}
-
 function flash(button, message, restore) {
   button.textContent = message;
   setTimeout(() => { button.textContent = restore; }, 1200);
 }
 
-function setView(view) {
+function setView(view, redraw = true) {
   state.view = view;
   el.viewTree.classList.toggle('is-on', view === 'tree');
   el.viewRaw.classList.toggle('is-on', view === 'raw');
-  render();
+  el.rawWrap.closest('label').hidden = view !== 'raw';
+  if (redraw) render();
+}
+
+/* The payload as text for the clipboard or a file, masked when the scope-bar
+ * switch is on. null when masking was asked for but the property is not valid
+ * JSON, so there is no structure to keep. */
+function payloadText() {
+  if (state.parseError) return Mask.on() ? null : (state.raw || '');
+  if (state.data === undefined) return '';
+  try { return JSON.stringify(Mask.apply(state.data), null, 2); } catch { return state.raw || ''; }
 }
 
 function downloadPayload() {
-  const text = state.parseError ? (state.raw || '') : pretty();
+  const text = payloadText();
+  if (text === null) { flash(el.download, 'Not valid JSON', 'Save file'); return; }
   if (!text) return;
   const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
   const link = document.createElement('a');
@@ -413,6 +480,71 @@ function revealElement() {
   });
 }
 
+/* ------------------------------------------------------------------ *
+ * Watch list
+ * ------------------------------------------------------------------ */
+
+function togglePin(path) {
+  const at = state.pins.indexOf(path);
+  if (at === -1) state.pins.push(path); else state.pins.splice(at, 1);
+  state.watchSig = '';
+  render();
+}
+
+/* Opens a path in the tree: the ancestors, then the row, scrolled into view. */
+function revealPath(path) {
+  if (state.view !== 'tree') setView('tree', false);
+  if (state.filter) { state.filter = ''; el.filter.value = ''; }
+  state.changedOnly = false;
+  el.changedOnly.checked = false;
+  ancestorsOf(path).forEach((ancestor) => state.expanded.add(ancestor));
+  state.focus = path;
+  state.scrollToFocus = true;
+  render();
+}
+
+function renderWatch() {
+  renderWatchStrip(el.watch, state, { reveal: revealPath, remove: togglePin });
+}
+
+/* ------------------------------------------------------------------ *
+ * Right-click menu
+ * ------------------------------------------------------------------ */
+
+function rowMenu(ev, info) {
+  openRowMenu(ev, info, {
+    state,
+    copy: (text) => copyWithToast(text, 'Copied'),
+    filterTo: (key) => { state.filter = key; el.filter.value = key; render(); },
+    togglePin,
+    canShowInStructure: (path) => !!jumpLabel(ownerLookup(), path),
+    showInStructure: (path) => Nav.go('structure', { segments: dataSegments(state.data, path) }),
+    rerender: render
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ * Compare payloads
+ * ------------------------------------------------------------------ */
+
+function renderCompare() {
+  renderComparePanel({ panel: el.comparePanel, toggle: el.compareToggle }, state, { copy: copyWithButton });
+}
+
+/* Jump to the previous / next marked change, opening whatever hides it. */
+function stepToChange(dir) {
+  const list = changeList();
+  const target = stepChange(list, state.focus, dir);
+  if (target === null) { toast('No marked changes'); return; }
+
+  if (state.view !== 'tree') setView('tree', false);
+  if (state.filter) { state.filter = ''; el.filter.value = ''; }
+  ancestorsOf(target).forEach((path) => state.expanded.add(path));
+  state.focus = target;
+  state.scrollToFocus = true;
+  render();
+}
+
 function mount() {
   el.live = document.getElementById('live');
   el.refresh = document.getElementById('refresh');
@@ -425,6 +557,15 @@ function mount() {
   el.copy = document.getElementById('copy');
   el.download = document.getElementById('download');
   el.select = document.getElementById('select');
+  el.changedOnly = document.getElementById('changed-only');
+  el.prevChange = document.getElementById('prev-change');
+  el.nextChange = document.getElementById('next-change');
+  el.changeCount = document.getElementById('change-count');
+  el.clearChanges = document.getElementById('clear-changes');
+  el.watch = document.getElementById('watch');
+  el.comparePanel = document.getElementById('compare-panel');
+  el.compareToggle = document.getElementById('compare-toggle');
+  el.rawWrap = document.getElementById('raw-wrap');
   el.viewport = document.getElementById('viewport');
   el.statusLeft = document.getElementById('status-left');
   el.statusRight = document.getElementById('status-right');
@@ -470,8 +611,72 @@ function mount() {
   });
 
   el.copy.addEventListener('click', () => {
-    copyText(state.parseError ? (state.raw || '') : pretty(), el.copy, 'Copy JSON');
+    const text = payloadText();
+    if (text === null) { flash(el.copy, 'Not valid JSON', 'Copy JSON'); return; }
+    copyWithButton(text, el.copy, 'Copy JSON');
   });
+
+  el.changedOnly.addEventListener('change', () => {
+    state.changedOnly = el.changedOnly.checked;
+    render();
+  });
+
+  el.prevChange.addEventListener('click', () => stepToChange(-1));
+  el.nextChange.addEventListener('click', () => stepToChange(1));
+
+  el.clearChanges.addEventListener('click', () => {
+    state.touched = new Set();
+    state.before = new Map();
+    state.focus = null;
+    render();
+  });
+
+  /* Using the toolbar means the user is done with whatever text they had
+   * selected in the view: let the redraw happen now instead of waiting for them
+   * to click somewhere to release it. */
+  const releaseSelection = () => {
+    const selection = window.getSelection && window.getSelection();
+    if (selection && hasTextSelection()) selection.removeAllRanges();
+    /* A redraw deferred while text was selected is flushed by the selection
+     * change this causes, so renderPending must stay set. */
+  };
+  document.querySelector('#view-data .toolbar').addEventListener('mousedown', releaseSelection);
+  document.querySelector('#view-data .toolbar').addEventListener('keydown', releaseSelection);
+
+  /* Advanced controls are hidden when it is off, so nothing they set may stay
+   * in force. */
+  Advanced.subscribe((on) => {
+    if (on) { startTracking(state, new Date()); renderCompare(); return; }
+    state.changedOnly = false;
+    el.changedOnly.checked = false;
+    state.compareOpen = false;
+    stopTracking(state);
+    render();
+  });
+
+  el.compareToggle.addEventListener('click', () => {
+    state.compareOpen = !state.compareOpen;
+    state.compareSig = '';
+    renderCompare();
+  });
+
+  el.rawWrap.addEventListener('change', () => {
+    state.rawWrap = el.rawWrap.checked;
+    render();
+  });
+
+  /* In the raw view the filter is a text search: Enter / Shift+Enter walk the
+   * matches. */
+  el.filter.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter' || state.view !== 'raw') return;
+    state.rawCursor = stepMark(el.viewport, state.rawCursor, ev.shiftKey);
+  });
+
+  el.viewport.addEventListener('mouseover', (ev) => {
+    const row = ev.target.closest && ev.target.closest('.row');
+    if (row && row.dataset.path !== undefined) state.hoverPath = row.dataset.path;
+  });
+  el.viewport.addEventListener('mouseleave', () => { state.hoverPath = null; });
 
   el.download.addEventListener('click', downloadPayload);
   el.select.addEventListener('click', revealElement);
@@ -483,14 +688,36 @@ function mount() {
   el.viewport.addEventListener('mouseout', () => setTimeout(flushPending, 0));
   el.viewport.addEventListener('focusout', () => setTimeout(flushPending, 0));
 
+  Nav.on('data', (request) => {
+    state.pendingReveal = request.segments;
+    if (state.active) render();
+  });
+
   Targets.subscribe((reason) => {
+    if (reason === 'list') { render(); return; }
+    /* A different script (or property, or page) means a different definition. */
+    Shared.setElements([]);
+    state.ownersRequested = false;
+    if (reason === 'selection') { state.pins = []; state.watchSig = ''; state.watchPrev = {}; }
     if (reason === 'selection' || reason === 'props') resetPayload();
     if (state.active) { render(); read(); }
   });
 }
 
+/* Keyboard: c copies the value under the pointer (or the row last jumped
+ * to), n / p walk the marked changes. */
+function copySelected() {
+  const path = state.hoverPath !== null ? state.hoverPath : state.focus;
+  const value = path === null || state.data === undefined ? undefined : valueAt(state.data, path);
+  if (value === undefined) { toast('Point at a row first'); return; }
+  copyWithToast(copyValueOf(Mask.apply(value)), 'Copied value');
+}
+
 export const DataTab = {
   mount,
+  copySelected,
+  step: stepToChange,
+  focusFilter: () => el.filter.focus(),
   read,
   /* For the shared Rescan button, which is visible on every tab: read again
    * only if the Data tab is the one currently on screen, so rescanning from

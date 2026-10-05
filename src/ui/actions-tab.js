@@ -13,10 +13,19 @@
 
 import {
   KIND_LABEL, classify, parseRequest, parseResponse, resultFor, isOmni,
-  label, kindOf, optionFlags, displayName, failureReason, failed
+  label, kindOf, optionFlags, displayName, failureReason, failed,
+  matchesFilter, elementForCall, previousSimilar
 } from '../core/actions-model.js';
+import { diffValues } from '../core/diff.js';
+import { diffLine } from './diff-lines.js';
 import { isContainer, addAllPaths } from '../core/json-tree-model.js';
 import { renderJsonTree } from './json-tree-view.js';
+import { Mask } from './mask-setting.js';
+import { Shared } from './shared.js';
+import { Nav } from './nav.js';
+import { Advanced } from './advanced.js';
+import { copyWithToast, copyWithButton } from './clipboard.js';
+import { toast } from './toast.js';
 
 const MAX_ENTRIES = 500;
 
@@ -26,6 +35,9 @@ const state = {
   preserve: true,
   onlyOmni: true,
   filter: '',
+  errorsOnly: false,
+  slowMs: 0, // 0 = no threshold
+  compareId: null, // the baseline call the selected one is compared against
   entries: [],
   selectedId: null,
   detailTab: 'input',
@@ -101,12 +113,11 @@ function push(record) {
 }
 
 function visibleEntries() {
-  const query = state.filter.trim().toLowerCase();
-  return state.entries.filter((entry) => {
-    if (state.onlyOmni && !entry.omni) return false;
-    if (!query) return true;
-    return `${entry.name} ${entry.signature} ${entry.url}`.toLowerCase().includes(query);
-  });
+  const opts = {
+    onlyOmni: state.onlyOmni, query: state.filter,
+    errorsOnly: state.errorsOnly, slowMs: state.slowMs
+  };
+  return state.entries.filter((entry) => matchesFilter(entry, opts));
 }
 
 /* --------------------------------------------------------- rendering */
@@ -142,6 +153,7 @@ function expandedSetFor(value) {
 
 function selectEntry(entry) {
   state.selectedId = entry.id;
+  if (state.compareId === entry.id) state.compareId = null;
   // Expand the Input / Options / Output JSON trees by default for ease of inspection.
   state.expanded = {
     input: expandedSetFor(entry.action.input),
@@ -158,6 +170,7 @@ function renderRow(entry) {
   row.className = 'log-row';
   if (entry.id === state.selectedId) row.classList.add('is-selected');
   if (failed(entry)) row.classList.add('is-failed');
+  if (entry.id === state.compareId) row.classList.add('is-baseline');
 
   const why = failureReason(entry);
 
@@ -200,12 +213,22 @@ function renderRow(entry) {
   row.appendChild(verdict);
 
   const took = cell('log-ms', entry.duration ? `${entry.duration} ms` : '');
+  if (state.slowMs > 0 && entry.duration >= state.slowMs) took.classList.add('is-slow');
   took.title = entry.duration
     ? `Round trip: ${entry.duration} ms from request sent to response received`
     : 'Duration unavailable';
   row.appendChild(took);
 
-  row.addEventListener('click', () => selectEntry(entry));
+  row.addEventListener('click', (ev) => {
+    /* Ctrl/Cmd-click picks the baseline the selected call is compared with. */
+    if ((ev.ctrlKey || ev.metaKey) && state.selectedId && entry.id !== state.selectedId) {
+      state.compareId = state.compareId === entry.id ? null : entry.id;
+      if (state.compareId) state.detailTab = 'compare';
+      renderList();
+      return;
+    }
+    selectEntry(entry);
+  });
 
   return row;
 }
@@ -260,6 +283,16 @@ function renderDetailHead(entry) {
   const why = failureReason(entry);
   if (why) head.appendChild(renderFailureBanner(entry));
 
+  const owner = elementForCall(entry, Shared.elements());
+  if (owner) {
+    const link = document.createElement('button');
+    link.className = 'icon-btn tiny';
+    link.textContent = `Show ${owner.name} in Structure`;
+    link.title = 'Select the element of the script that makes this call';
+    link.addEventListener('click', () => Nav.go('structure', { elementKey: owner.key }));
+    head.appendChild(link);
+  }
+
   return head;
 }
 
@@ -304,7 +337,9 @@ function renderDetailTools(entry) {
     button.textContent = tabLabel;
     if (!enabled) {
       button.disabled = true;
-      button.title = `This call carried no ${tabLabel.toLowerCase()}`;
+      button.title = tabId === 'compare'
+        ? 'Press d to compare with the previous call to the same place, or Ctrl/Cmd-click another call'
+        : `This call carried no ${tabLabel.toLowerCase()}`;
     } else {
       button.addEventListener('click', () => {
         state.detailTab = tabId;
@@ -316,7 +351,7 @@ function renderDetailTools(entry) {
   tools.appendChild(tabStrip);
 
   const value = bodyFor(entry);
-  const treeable = isContainer(value);
+  const treeable = isContainer(value) && state.detailTab !== 'compare';
 
   const expand = document.createElement('button');
   expand.className = 'icon-btn tiny';
@@ -344,9 +379,11 @@ function renderDetailTools(entry) {
   copy.className = 'icon-btn tiny';
   copy.textContent = 'Copy';
   copy.addEventListener('click', () => {
-    copyText(JSON.stringify(bodyFor(entry), null, 2), copy, 'Copy');
+    copyWithButton(JSON.stringify(copyBodyFor(entry), null, 2), copy, 'Copy');
   });
   tools.appendChild(copy);
+
+  if (state.detailTab === 'compare') return tools;
 
   const find = document.createElement('input');
   find.type = 'search';
@@ -370,7 +407,47 @@ function renderDetailTools(entry) {
   return tools;
 }
 
+function baselineFor() {
+  return state.entries.find((entry) => entry.id === state.compareId) || null;
+}
+
+/* Input, options and output of the baseline against the selected call. */
+function compareSections(entry, baseline) {
+  return [
+    ['Input', baseline.action.input, entry.action.input],
+    ['Options', baseline.action.options, entry.action.options],
+    ['Output', baseline.output, entry.output]
+  ].map(([title, before, after]) => ({ title, ...diffValues(before, after) }));
+}
+
+function renderCompare(entry, baseline) {
+  const body = document.createElement('div');
+  body.className = 'detail-body';
+
+  const intro = document.createElement('div');
+  intro.className = 'valid-note';
+  intro.textContent = `Changes from the call at ${baseline.time.toLocaleTimeString()} (${baseline.duration} ms) ` +
+    `to this one at ${entry.time.toLocaleTimeString()} (${entry.duration} ms).`;
+  body.appendChild(intro);
+
+  compareSections(entry, baseline).forEach((section) => {
+    const title = document.createElement('h3');
+    title.className = 'diff-title';
+    title.textContent = `${section.title} — ${section.changes.length ? `${section.changes.length}${section.truncated ? '+' : ''} difference(s)` : 'identical'}`;
+    body.appendChild(title);
+
+    section.changes.forEach((change) => body.appendChild(diffLine(change)));
+  });
+  return body;
+}
+
 function renderDetailBody(entry) {
+  if (state.detailTab === 'compare') {
+    const baseline = baselineFor();
+    if (baseline) return renderCompare(entry, baseline);
+    state.detailTab = 'input';
+  }
+
   const body = document.createElement('div');
   body.className = 'detail-body';
 
@@ -388,6 +465,7 @@ function renderDetailBody(entry) {
     expanded: state.expanded[state.detailTab],
     expandedText: state.expandedText[state.detailTab],
     filter: state.detailFilter,
+    transform: Mask.apply,
     onToggle: renderDetail
   });
 
@@ -414,7 +492,25 @@ function renderDetail() {
   pane.appendChild(renderDetailBody(entry));
 }
 
+/* What Copy puts on the clipboard: the tab's body, masked when the switch is
+ * on. A comparison masks only the before and after values; its titles, paths
+ * and kinds are what make it readable. */
+function copyBodyFor(entry) {
+  const body = bodyFor(entry);
+  if (state.detailTab !== 'compare' || !Array.isArray(body)) return Mask.apply(body);
+  return body.map((section) => ({
+    ...section,
+    changes: section.changes.map((change) => ({
+      ...change, before: Mask.apply(change.before), after: Mask.apply(change.after)
+    }))
+  }));
+}
+
 function bodyFor(entry) {
+  if (state.detailTab === 'compare') {
+    const baseline = baselineFor();
+    return baseline ? compareSections(entry, baseline) : undefined;
+  }
   if (state.detailTab === 'output') return entry.output;
   if (state.detailTab === 'options') return entry.action.options;
   return entry.action.input; // 'input' is the default and only remaining tab
@@ -434,11 +530,16 @@ function hasOptions(entry) {
  * clicks down the list. A tab with nothing behind it is disabled instead of
  * hidden — "this call carried no options" is worth stating outright. */
 function tabsFor(entry) {
-  return [
+  const tabs = [
     ['input', 'Input', true],
     ['output', 'Output', true],
     ['options', 'Options', hasOptions(entry)]
   ];
+  /* Compare is started with d or Ctrl/Cmd-click, so its tab exists only while
+   * there is something to compare. */
+  const baseline = baselineFor();
+  if (baseline && baseline.id !== entry.id) tabs.push(['compare', 'Compare', true]);
+  return tabs;
 }
 
 function clamped(node) {
@@ -474,14 +575,6 @@ function renderStatus() {
     `${state.recording ? 'Recording' : 'Paused'}${state.preserve ? ' · preserving log' : ''}`;
 }
 
-function copyText(text, button, restore) {
-  if (!text) return;
-  navigator.clipboard.writeText(text).then(() => {
-    button.textContent = 'Copied';
-    setTimeout(() => { button.textContent = restore; }, 1200);
-  }, () => { /* clipboard unavailable in this context */ });
-}
-
 /* ----------------------------------------------------------- wiring */
 
 function exportVisibleEntries() {
@@ -494,10 +587,10 @@ function exportVisibleEntries() {
     durationMs: entry.duration,
     httpStatus: entry.httpStatus,
     state: entry.state,
-    input: entry.action.input,
-    options: hasOptions(entry) ? entry.action.options : undefined,
-    output: entry.output,
-    error: entry.error
+    input: Mask.apply(entry.action.input),
+    options: hasOptions(entry) ? Mask.apply(entry.action.options) : undefined,
+    output: Mask.apply(entry.output),
+    error: Mask.apply(entry.error)
   }));
   const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' }));
   const link = document.createElement('a');
@@ -522,8 +615,46 @@ function mount() {
   document.getElementById('log-clear').addEventListener('click', () => {
     state.entries = [];
     state.selectedId = null;
+    state.compareId = null;
     renderList();
     updateBadge();
+  });
+
+  const refilter = () => { renderList(); updateBadge(); };
+  document.getElementById('log-errors-only').addEventListener('change', (ev) => {
+    state.errorsOnly = ev.currentTarget.checked; refilter();
+  });
+  document.getElementById('log-slow').addEventListener('input', (ev) => {
+    state.slowMs = Math.max(0, Number(ev.currentTarget.value) || 0); refilter();
+  });
+
+  Shared.setCalls(() => state.entries);
+
+  /* Advanced filters are hidden when it is off, so none may stay in force. */
+  Advanced.subscribe((on) => {
+    if (on) return;
+    state.errorsOnly = false;
+    state.slowMs = 0;
+    state.onlyOmni = true;
+    document.getElementById('log-errors-only').checked = false;
+    document.getElementById('log-slow').value = '';
+    document.getElementById('log-only-omni').checked = true;
+    refilter();
+  });
+
+  Nav.on('actions', ({ id }) => {
+    const entry = state.entries.find((candidate) => candidate.id === id);
+    if (!entry) return;
+    if (!visibleEntries().includes(entry)) {
+      state.onlyOmni = false; state.errorsOnly = false; state.slowMs = 0; state.filter = '';
+      document.getElementById('log-only-omni').checked = false;
+      document.getElementById('log-errors-only').checked = false;
+      document.getElementById('log-slow').value = '';
+      document.getElementById('log-filter').value = '';
+    }
+    selectEntry(entry);
+    const row = el.list.querySelector('.log-row.is-selected');
+    if (row && row.scrollIntoView) row.scrollIntoView({ block: 'center' });
   });
 
   document.getElementById('log-only-omni').addEventListener('change', (ev) => {
@@ -556,6 +687,7 @@ function mount() {
     if (state.preserve) return;
     state.entries = [];
     state.selectedId = null;
+    state.compareId = null;
     if (state.active) renderList();
     updateBadge();
   });
@@ -563,8 +695,29 @@ function mount() {
   renderList();
 }
 
+function copySelected() {
+  const entry = selected();
+  if (!entry) { toast('Select a call first'); return; }
+  copyWithToast(JSON.stringify(copyBodyFor(entry), null, 2), `Copied ${state.detailTab}`);
+}
+
+/* Keyboard d: diff the selected call against the last earlier call to the
+ * same place. */
+function compareWithPrevious() {
+  const entry = selected();
+  if (!entry) { toast('Select a call first'); return; }
+  const earlier = previousSimilar(state.entries, entry);
+  if (!earlier) { toast('No earlier call to the same place'); return; }
+  state.compareId = earlier.id;
+  state.detailTab = 'compare';
+  renderList();
+}
+
 export const RemoteActions = {
   mount,
+  compareWithPrevious,
+  copySelected,
+  focusFilter: () => document.getElementById('log-filter').focus(),
   show: () => { state.active = true; renderList(); renderStatus(); },
   hide: () => { state.active = false; }
 };

@@ -373,3 +373,45 @@ export function failureReason(entry, full) {
 export function failed(entry) {
   return failureReason(entry) !== null;
 }
+
+/* ------------------------------------------------------ filtering */
+
+/* opts: { onlyOmni, query, errorsOnly, slowMs } */
+export function matchesFilter(entry, opts) {
+  if (opts.onlyOmni && !entry.omni) return false;
+  if (opts.errorsOnly && !failed(entry)) return false;
+  if (opts.slowMs > 0 && !(entry.duration >= opts.slowMs)) return false;
+
+  const query = (opts.query || '').trim().toLowerCase();
+  if (!query) return true;
+  return `${entry.name} ${entry.signature} ${entry.url}`.toLowerCase().includes(query);
+}
+
+/* ---------------------------------------------- script elements */
+
+/* The element of the script that makes this call: the one whose bundle,
+ * Integration Procedure key or remote class is what the call is named after.
+ * null when none does (a custom Apex call, or the definition is not loaded). */
+export function elementForCall(entry, elements) {
+  const names = new Set([entry.name, entry.signature, findName(entry.action || {})].filter(Boolean));
+  return elements.find((element) => element.remote && names.has(element.remote)) || null;
+}
+
+/* Calls made by one element, in the order they happened. */
+export function callsForElement(element, entries) {
+  if (!element.remote) return [];
+  return entries.filter((entry) => {
+    const names = [entry.name, entry.signature, findName(entry.action || {})];
+    return names.includes(element.remote);
+  });
+}
+
+/* The call before this one that was made to the same place, for "what
+ * changed since last time". */
+export function previousSimilar(entries, entry) {
+  const at = entries.indexOf(entry);
+  for (let i = at - 1; i >= 0; i--) {
+    if (entries[i].name === entry.name && entries[i].signature === entry.signature) return entries[i];
+  }
+  return null;
+}

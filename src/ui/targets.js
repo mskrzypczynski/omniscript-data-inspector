@@ -230,16 +230,84 @@ function hostProps(IDX) {
  * without shipping the whole (possibly huge) payload back to the panel. Used
  * for the definition's asIndex. Same self-containment rule as hostScan; relies
  * on window.__omniHosts. */
-function hostPeek(IDX, PROP, FIELD) {
+export function hostPeek(IDX, PROP, FIELD) {
   try {
     const node = window.__omniHosts && window.__omniHosts[IDX];
     if (!node) return { ok: true, value: null };
     let value = node[PROP];
-    if (typeof value === 'string') value = JSON.parse(value);
+    if (typeof value === 'string') {
+      /* The panel asks every couple of seconds and the string is usually
+       * unchanged: parse it once and reuse the result while it is identical. */
+      const cache = window.__omniPeekCache;
+      if (cache && cache.idx === IDX && cache.prop === PROP && cache.raw === value) {
+        value = cache.parsed;
+      } else {
+        const parsed = JSON.parse(value);
+        window.__omniPeekCache = { idx: IDX, prop: PROP, raw: value, parsed };
+        value = parsed;
+      }
+    }
     const field = value && typeof value === 'object' ? value[FIELD] : null;
     return { ok: true, value: field === undefined ? null : field };
   } catch {
     return { ok: false, value: null };
+  }
+}
+
+/* Outlines the component of one script element on the page for a couple of
+ * seconds, found by the lwcId the definition records (matched against the
+ * element's attributes and lwcId property), falling back to the element's
+ * name in the usual name attributes. Searches the host and every open shadow
+ * root under it. Same self-containment rule as hostScan; relies on
+ * window.__omniHosts. Returns { ok, found, visible }. */
+export function hostHighlight(IDX, LWCID, NAME, SHOW) {
+  try {
+    const ID = '__omni_inspector_outline';
+    const old = document.getElementById(ID);
+    if (old) old.remove();
+    if (!SHOW) return { ok: true, found: false, visible: false };
+
+    const root = window.__omniHosts && window.__omniHosts[IDX];
+    if (!root) return { ok: true, found: false, visible: false };
+
+    const NAME_ATTRS = ['data-omni-key', 'data-name', 'data-element-name', 'name'];
+    const search = (test) => {
+      const stack = [root];
+      let visited = 0;
+      while (stack.length && visited++ < 30000) {
+        const node = stack.pop();
+        if (node.nodeType === 1 && test(node)) return node;
+        const children = node.children ? Array.prototype.slice.call(node.children) : [];
+        if (node.shadowRoot) children.push.apply(children, Array.prototype.slice.call(node.shadowRoot.children));
+        for (let i = children.length - 1; i >= 0; i--) stack.push(children[i]);
+      }
+      return null;
+    };
+
+    let found = LWCID ? search((node) => {
+      if (node.lwcId === LWCID) return true;
+      for (let i = 0; i < node.attributes.length; i++) if (node.attributes[i].value === LWCID) return true;
+      return false;
+    }) : null;
+    if (!found && NAME) {
+      found = search((node) => NAME_ATTRS.some((attr) => node.getAttribute(attr) === NAME));
+    }
+    if (!found) return { ok: true, found: false, visible: false };
+
+    if (found.scrollIntoView) found.scrollIntoView({ block: 'center', inline: 'nearest' });
+    const rect = found.getBoundingClientRect();
+    if (!rect.width && !rect.height) return { ok: true, found: true, visible: false };
+
+    const box = document.createElement('div');
+    box.id = ID;
+    box.style.cssText = 'position:fixed;pointer-events:none;z-index:2147483647;' +
+      'outline:2px solid #1a73e8;background:rgba(26,115,232,0.18);' +
+      `left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;`;
+    document.body.appendChild(box);
+    setTimeout(() => box.remove(), 2500);
+    return { ok: true, found: true, visible: true };
+  } catch {
+    return { ok: false, found: false, visible: false };
   }
 }
 
@@ -269,6 +337,7 @@ const state = {
   truncated: false,
   hosts: [],
   selected: 0,
+  reselected: false,
   hints: [],
   visible: true,
   dirty: { target: false, frame: false }
@@ -506,6 +575,31 @@ function peekField(prop, field, callback) {
   });
 }
 
+/* Outline (or clear the outline of) a script element on the page. The
+ * callback receives whether the element was found. */
+function highlight(element, show, callback) {
+  const host = selected();
+  if (!host) { callback(false); return; }
+  const expression = `(${hostHighlight.toString()})(${JSON.stringify(host.local)},` +
+    `${JSON.stringify(element.lwcId || '')},${JSON.stringify(element.name || '')},${show ? 'true' : 'false'})`;
+  evalOnInspectedPage(host.frame, expression, (result) => {
+    callback(!!(result && result.ok && result.found));
+  });
+}
+
+/* After the list of hosts narrows or widens: keep the selected script when it
+ * is still listed, otherwise move to the first one. Only the second case is a
+ * new 'selection' that tabs must reset for; changing the list alone ('list')
+ * leaves their state, pins and history alone. */
+function keepOrReselect() {
+  const hosts = visibleHosts();
+  state.reselected = false;
+  if (hosts.length && !hosts.some((host) => host.index === state.selected)) {
+    state.selected = hosts[0].index;
+    state.reselected = true;
+  }
+}
+
 function mount(nodes) {
   el.target = nodes.target;
   el.frame = nodes.frame;
@@ -515,8 +609,9 @@ function mount(nodes) {
     el.nested.addEventListener('change', () => {
       state.showNested = el.nested.checked;
       el.target.dataset.sig = '';
+      keepOrReselect();
       renderTargets();
-      notify('selection');
+      notify(state.reselected ? 'selection' : 'list');
     });
   }
 
@@ -533,12 +628,9 @@ function mount(nodes) {
 
   el.frame.addEventListener('change', () => {
     state.frameFilter = el.frame.value;
-    const hosts = visibleHosts();
-    if (hosts.length && !hosts.some((host) => host.index === state.selected)) {
-      state.selected = hosts[0].index;
-    }
+    keepOrReselect();
     renderTargets();
-    notify('selection');
+    notify(state.reselected ? 'selection' : 'list');
   });
 
   el.frame.addEventListener('blur', () => {
@@ -562,6 +654,7 @@ export const Targets = {
   fetch: fetchProperty,
   listProps,
   peekField,
+  highlight,
   evalOn: evalOnInspectedPage,
   selected,
   hosts: () => state.hosts,

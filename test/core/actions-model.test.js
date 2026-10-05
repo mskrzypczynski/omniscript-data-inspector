@@ -381,3 +381,43 @@ describe('failureReason', () => {
     expect(failureReason({ error: long }, true).length).toBeGreaterThan(300); // the detail pane gets it all
   });
 });
+
+describe('filtering, grouping and matching to the script', () => {
+  const mk = (name, extra = {}) => ({
+    name, signature: `Svc.${name}`, url: '/aura', omni: true, duration: 50, state: 'SUCCESS', httpStatus: 200,
+    action: { input: { who: 'Ada' }, options: {} }, output: { ok: 1 }, ...extra
+  });
+  const el = (key, name, category, remote, parentKey = '') => ({ key, name, parentKey, remote, category: { key: category } });
+
+  it('filters by errors, slowness and text', async () => {
+    const { matchesFilter } = await import('../../src/core/actions-model.js');
+    const ok = mk('Fine');
+    const bad = mk('Bad', { error: 'boom' });
+    const slow = mk('Slow', { duration: 900 });
+
+    expect(matchesFilter(ok, { errorsOnly: true })).toBe(false);
+    expect(matchesFilter(bad, { errorsOnly: true })).toBe(true);
+    expect(matchesFilter(slow, { slowMs: 500 })).toBe(true);
+    expect(matchesFilter(ok, { slowMs: 500 })).toBe(false);
+    expect(matchesFilter(ok, { query: 'ada' })).toBe(false);
+    expect(matchesFilter(ok, { query: 'fine' })).toBe(true);
+    expect(matchesFilter(mk('X', { omni: false }), { onlyOmni: true })).toBe(false);
+  });
+
+  it('matches calls to the element that makes them', async () => {
+    const { elementForCall, callsForElement, previousSimilar } = await import('../../src/core/actions-model.js');
+    const elements = [
+      el('s1', 'StepA', 'step', ''), el('a1', 'DoWork', 'action', 'BundleOne', 's1'),
+      el('s2', 'StepB', 'step', ''), el('a2', 'Other', 'action', 'BundleTwo', 's2')
+    ];
+    const c1 = mk('BundleTwo'); const c2 = mk('BundleOne'); const c3 = mk('Unknown'); const c4 = mk('BundleOne');
+
+    expect(elementForCall(c2, elements).name).toBe('DoWork');
+    expect(elementForCall(c3, elements)).toBeNull();
+    expect(callsForElement(elements[1], [c1, c2, c3, c4])).toEqual([c2, c4]);
+    expect(c1.name).toBe('BundleTwo');
+
+    expect(previousSimilar([c2, c3, c4], c4)).toBe(c2);
+    expect(previousSimilar([c2, c3, c4], c2)).toBeNull();
+  });
+});

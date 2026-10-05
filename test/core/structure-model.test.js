@@ -382,3 +382,26 @@ describe('executionStatus', () => {
     expect(status[indexed[2].key]).toBe('current');
   });
 });
+
+describe('searchText', () => {
+  it('lets a word from the screen find an element in a multi-language script', async () => {
+    const { flatten } = await import('../../src/core/structure-model.js');
+    const definition = { children: [
+      { name: 'Greeting', type: 'Text Block', propSetMap: { textKey: 'k_greet' } },
+      { name: 'Email', type: 'Email', propSetMap: { label: 'k_email', helpText: 'k_help' } }
+    ] };
+    const header = { bpLang: 'Multi-Language', allCustomLabels: {
+      k_greet: '<b>Welcome aboard</b>', k_email: 'Your address', k_help: 'We never share it'
+    } };
+    const [greeting, email] = flatten(definition, header);
+    expect(greeting.searchText).toContain('welcome aboard');
+    expect(email.searchText).toContain('k_email');
+    expect(email.searchText).toContain('your address');
+    expect(email.searchText).toContain('we never share it');
+  });
+
+  it('carries the lwcId', async () => {
+    const { flatten } = await import('../../src/core/structure-model.js');
+    expect(flatten({ children: [{ name: 'A', type: 'Text', lwcId: 'lwc-9', propSetMap: {} }] }, null)[0].lwcId).toBe('lwc-9');
+  });
+});

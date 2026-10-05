@@ -19,8 +19,11 @@
   --flash-duration: 1.4s;
 }
 
+/* Dark palette. It applies when the OS prefers dark, unless DevTools itself
+ * is light (theme.js sets data-theme from chrome.devtools.panels.themeName),
+ * and always when DevTools is dark. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #1f1f1f;
     --bg-alt: #282828;
     --line: #3c3c3c;
@@ -36,7 +39,27 @@
     --flash: #4a4218;
     --err-bg: #3b1f1d;
     --err-fg: #f2938c;
+    --flash-bar: #c9a227;
   }
+}
+
+:root[data-theme="dark"] {
+    --bg: #1f1f1f;
+    --bg-alt: #282828;
+    --line: #3c3c3c;
+    --line-soft: #333333;
+    --fg: #e8eaed;
+    --fg-dim: #9aa0a6;
+    --accent: #8ab4f8;
+    --key: #c792ea;
+    --str: #9ecc7f;
+    --num: #a0c8ff;
+    --bool: #7fb3ff;
+    --null: #8f8f8f;
+    --flash: #4a4218;
+    --err-bg: #3b1f1d;
+    --err-fg: #f2938c;
+    --flash-bar: #c9a227;
 }
 
 * { box-sizing: border-box; }
@@ -145,6 +168,7 @@ body {
 }
 
 .field.checkbox { gap: 3px; }
+.field[hidden] { display: none; }
 
 button,
 input,
@@ -861,3 +885,253 @@ button:disabled:hover { border-color: var(--line); }
 .el-status.is-done { color: var(--str); }
 .el-status.is-current { color: var(--accent); }
 .log-row.is-selected .el-status { color: #fff; }
+
+/* ---------- jumping, changes, hidden elements, masking ---------- */
+
+.bar-label {
+  color: var(--fg-dim);
+  font-weight: 600;
+}
+
+.bar-note { color: var(--fg-dim); white-space: nowrap; }
+
+/* The scope-bar switch glows while masking is on, so it is hard to forget. */
+.mask-switch.is-on { color: var(--err-fg); font-weight: 600; }
+
+/* A value that changed stays marked after the amber has faded: a bar in the
+ * left margin, outside the text flow so selections are unaffected. */
+.row.is-touched { box-shadow: inset 3px 0 0 var(--flash-bar, #e0a800); }
+
+.row.is-focus {
+  outline: 1px solid var(--accent);
+  outline-offset: -1px;
+  background: var(--bg-alt);
+}
+
+.log-row.is-hidden:not(.is-selected) .log-name,
+.log-row.is-hidden:not(.is-selected) .el-type,
+.log-row.is-hidden:not(.is-selected) .el-value { opacity: 0.45; }
+.log-row.is-hidden:not(.is-selected) .log-name { font-style: italic; }
+
+.tag-hidden { color: var(--fg-dim); border-color: var(--fg-dim); min-width: 0; }
+.log-row.is-selected .tag-hidden { color: #fff; border-color: rgba(255, 255, 255, 0.6); }
+
+.detail-why {
+  margin-top: 4px;
+  color: var(--fg-dim);
+  overflow-wrap: anywhere;
+}
+.detail-why.is-hidden,
+.cond-expr.is-hidden { color: var(--err-fg); }
+
+.rule-line {
+  font-family: var(--mono);
+  font-size: 11px;
+  margin: 0 10px;
+  padding: 1px 0;
+  color: var(--fg-dim);
+  overflow-wrap: anywhere;
+}
+.rule-line.is-false { color: var(--err-fg); }
+
+/* ---------- remote actions: groups, slow calls, compare ---------- */
+
+input.narrow { width: 6ch; }
+
+.log-ms.is-slow { color: #b06000; font-weight: 600; }
+.log-row.is-selected .log-ms.is-slow { color: #fff; }
+
+.log-row.is-baseline:not(.is-selected) { box-shadow: inset 3px 0 0 var(--accent); }
+
+.diff-title { margin: 10px 10px 2px; font-size: 11px; color: var(--fg-dim); }
+.diff-line {
+  margin: 0 10px;
+  padding: 1px 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.diff-line.is-added { color: var(--str); }
+.diff-line.is-removed { color: var(--err-fg); }
+.diff-line.is-changed { color: var(--fg); background: var(--bg-alt); }
+
+.call-line {
+  margin: 0 10px;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--line-soft);
+  font-family: var(--mono);
+  font-size: 11px;
+  cursor: pointer;
+}
+.call-line:hover { background: var(--bg-alt); }
+.call-line.is-failed { color: var(--err-fg); }
+
+/* ---------- watch list, compare payloads, raw search, context menu ---------- */
+
+.watch {
+  flex: none;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.watch[hidden], .compare[hidden] { display: none; }
+
+.watch-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 1px 4px 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+}
+.watch-item.is-changed { animation: flash var(--flash-duration) ease-out; }
+.watch-item.is-gone { opacity: 0.6; }
+.watch-name {
+  border: 0; background: none; padding: 0; min-height: 0;
+  color: var(--key); cursor: pointer;
+}
+.watch-value { color: var(--str); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.watch-remove {
+  border: 0; background: none; padding: 0 2px; min-height: 0;
+  color: var(--fg-dim); cursor: pointer;
+}
+
+.compare {
+  flex: none;
+  max-height: 40%;
+  overflow: auto;
+  background: var(--bg-alt);
+  border-bottom: 1px solid var(--line);
+}
+.compare-list { padding: 4px 6px 8px; font-family: var(--mono); font-size: 11px; }
+
+.raw.is-wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+mark.is-current { background: var(--accent); color: #fff; }
+
+.vwin { overflow-anchor: none; }
+
+.ctx-menu {
+  position: fixed;
+  z-index: 1000;
+  min-width: 170px;
+  padding: 3px 0;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+.ctx-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  padding: 3px 12px;
+  cursor: pointer;
+}
+.ctx-item:hover:not(:disabled), .ctx-item:focus:not(:disabled) { background: var(--accent); color: #fff; outline: 0; }
+.ctx-item:disabled { color: var(--fg-dim); opacity: 0.6; cursor: default; }
+.ctx-sep { height: 1px; margin: 3px 0; background: var(--line-soft); }
+
+/* ---------- toggle switch, toast ---------- */
+
+.toast {
+  position: fixed;
+  right: 12px;
+  bottom: 30px;
+  z-index: 1100;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--fg);
+  color: var(--bg);
+  pointer-events: none;
+}
+
+/* ---------- advanced controls, line numbers ---------- */
+
+body:not(.is-advanced) .adv { display: none !important; }
+
+.numbered { counter-reset: line; }
+.row::before {
+  counter-increment: line;
+  content: counter(line);
+  position: absolute;
+  left: 0;
+  width: calc(var(--gutter, 0px) - 8px);
+  text-align: right;
+  text-indent: 0;
+  color: var(--fg-dim);
+  opacity: 0.55;
+  user-select: none;
+  pointer-events: none;
+}
+
+.raw.is-numbered { counter-reset: rawline; white-space: normal; }
+.raw-line {
+  counter-increment: rawline;
+  position: relative;
+  min-height: 1.6em;
+  padding-left: var(--gutter);
+  white-space: pre;
+}
+.raw-line::before {
+  content: counter(rawline);
+  position: absolute;
+  left: 0;
+  width: calc(var(--gutter) - 8px);
+  text-align: right;
+  color: var(--fg-dim);
+  opacity: 0.55;
+  user-select: none;
+}
+.raw.is-wrap .raw-line { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* A switch: a track with a knob that slides across when on. */
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--fg-dim);
+  cursor: pointer;
+}
+.switch-track {
+  position: relative;
+  width: 26px;
+  height: 14px;
+  border-radius: 7px;
+  background: var(--line);
+  transition: background 0.15s;
+}
+.switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bg);
+  box-shadow: 0 0 0 1px var(--fg-dim);
+  transition: transform 0.15s;
+}
+.switch.is-on { color: var(--fg); }
+.switch.is-on .switch-track { background: var(--accent); }
+.switch.is-on .switch-knob { transform: translateX(12px); box-shadow: none; }
+.switch:focus-visible .switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .switch-track, .switch-knob { transition: none; }
+}
+
+/* Frame and Nested: a second line under the scope bar, so turning Advanced on
+ * adds a row instead of widening the first one. */
+.scope-extra {
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}

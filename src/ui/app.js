@@ -12,8 +12,14 @@ import { RemoteActions } from './actions-tab.js';
 import { Targets } from './targets.js';
 import { initSplitPane } from './split.js';
 import { mountPanelShell } from './panel-shell.js';
+import { Mask } from './mask-setting.js';
+import { Advanced } from './advanced.js';
+import { applyTheme } from './theme.js';
 import './json-tree-view.js'; // registers the document-level copy handler
 
+applyTheme(document.documentElement, chrome.devtools && chrome.devtools.panels);
+Advanced.mount(document.getElementById('advanced'));
+Mask.mount(document.getElementById('mask-values'));
 DataTab.mount();
 RemoteActions.mount();
 Structure.mount();
@@ -26,6 +32,17 @@ Targets.mount({
   target: document.getElementById('target'),
   frame: document.getElementById('frame'),
   nested: document.getElementById('show-nested')
+});
+
+/* Frame and Nested are advanced controls: when Advanced goes off they go back
+ * to All frames / off. Targets keeps the selected script if it is still listed,
+ * so this does not disturb the tabs. */
+Advanced.subscribe((on) => {
+  if (on) return;
+  const nested = document.getElementById('show-nested');
+  if (nested.checked) { nested.checked = false; nested.dispatchEvent(new Event('change')); }
+  const frame = document.getElementById('frame');
+  if (frame.value !== '') { frame.value = ''; frame.dispatchEvent(new Event('change')); }
 });
 
 document.getElementById('rescan').addEventListener('click', () => {
