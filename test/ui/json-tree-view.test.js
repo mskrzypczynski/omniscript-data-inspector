@@ -5,7 +5,7 @@
  * renderJsonTree actually draw the rows, respect expanded/filter state, and
  * flash a changed value? */
 
-import { renderJsonTree } from '../../src/ui/json-tree-view.js';
+import { renderJsonTree, pathOf } from '../../src/ui/json-tree-view.js';
 
 function keysIn(container) {
   return [...container.querySelectorAll('.k')].map((el) => el.textContent);
@@ -62,5 +62,19 @@ describe('renderJsonTree', () => {
 
     expect(rowFor('a').classList.contains('is-changed')).toBe(true);
     expect(rowFor('b').classList.contains('is-changed')).toBe(false);
+  });
+});
+
+describe('row copy buttons', () => {
+  it('builds Console-usable paths', () => {
+    expect(pathOf('root', ['a', '0', 'b c', 'd'])).toBe('root.a[0]["b c"].d');
+  });
+
+  it('adds a copy-value and a copy-path button to every row', () => {
+    const container = document.createElement('div');
+    renderJsonTree(container, 'root', { a: 1 }, { expanded: new Set(['']) });
+    const rows = [...container.querySelectorAll('.row')].filter((row) => row.querySelector('.k'));
+    expect(rows).toHaveLength(2);
+    rows.forEach((row) => expect(row.querySelectorAll('.row-copy')).toHaveLength(2));
   });
 });
