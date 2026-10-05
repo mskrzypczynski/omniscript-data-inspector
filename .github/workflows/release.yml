@@ -1,0 +1,75 @@
+name: Release
+
+# Push a tag like v1.4.0 (npm run bump prints the commands). The workflow
+# checks the tag against the manifest, builds the zip, attaches it to a GitHub
+# Release and, if the Web Store secrets exist, uploads it as a new store
+# draft. Publishing for review stays a manual step unless you run this
+# workflow by hand with "publish" ticked.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Submit the uploaded version for Chrome Web Store review
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+
+      - name: Read version
+        id: version
+        run: echo "value=$(node -p "require('./manifest.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Tag must match manifest version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          if [ "${GITHUB_REF_NAME}" != "v${{ steps.version.outputs.value }}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match manifest version ${{ steps.version.outputs.value }}"
+            exit 1
+          fi
+
+      - run: npm run package
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: omniscript-data-inspector-${{ steps.version.outputs.value }}
+          path: dist/*.zip
+
+      - name: GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.zip
+          generate_release_notes: true
+
+      - name: Upload to Chrome Web Store
+        env:
+          EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        run: |
+          if [ -z "$EXTENSION_ID" ] || [ -z "$REFRESH_TOKEN" ]; then
+            echo "Chrome Web Store secrets not set; skipping upload."
+            exit 0
+          fi
+          ARGS=""
+          if [ "${{ inputs.publish }}" = "true" ]; then ARGS="--auto-publish"; fi
+          npx --yes chrome-webstore-upload-cli@3 upload \
+            --source dist/omniscript-data-inspector-${{ steps.version.outputs.value }}.zip $ARGS

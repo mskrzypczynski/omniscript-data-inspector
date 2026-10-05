@@ -46,7 +46,23 @@ npm install
 npm test          # Jest: core unit tests, jsdom UI tests, a boot/wiring test
 npm run lint       # ESLint
 npm run package    # zip the shipped files for the Chrome Web Store
+npm run bump -- minor   # bump manifest.json, package.json and the lockfile together
 ```
+
+### Releasing
+
+1. `npm run bump -- patch|minor|major`, then commit, `git tag vX.Y.Z` and
+   `git push --follow-tags`.
+2. The **Release** workflow checks the tag against the manifest, lints, tests,
+   builds the zip and attaches it to a GitHub Release.
+3. If the repository secrets `CWS_EXTENSION_ID`, `CWS_CLIENT_ID`,
+   `CWS_CLIENT_SECRET` and `CWS_REFRESH_TOKEN` are set, it also uploads the zip
+   to the Chrome Web Store as a draft. Submit it for review in the dashboard, or
+   run the workflow manually with *publish* ticked.
+4. Check the [privacy policy](https://mskrzypczynski.github.io/omniscript-data-inspector/privacy.html)
+   still matches before submitting.
+
+CI (lint, tests, packaging) runs on every pull request.
 
 ## Permissions and privacy
 
