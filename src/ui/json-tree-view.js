@@ -9,19 +9,27 @@
  *     expanded: Set,          // paths currently open, mutated by the caller
  *     changed: Set|null,      // paths to flash
  *     changedBranch: Set|null,// collapsed parents that contain a change
+ *     touched: Set|null,      // paths that changed at some point; kept marked
+ *     before: Map|null,       // marked path -> value before its first change (tooltip)
+ *     focus: path|null,       // the row being pointed at (jump / next change)
+ *     only: Set|null,         // show just these paths (changed-only view)
  *     filter: '',             // key/value substring filter
- *     maxRows: 4000,
+ *     transform: fn(value),   // applied to what the copy buttons put on the clipboard
+ *     onJump: fn(path)|null,  // adds an "in structure" button to the rows jumpLabel accepts
+ *     jumpLabel: fn(path)|null, // tooltip for that row's button, or null to leave the row without one
+ *     pinned: Set|null,       // paths on the watch list (labels the pin button)
+ *     onPin: fn(path)|null,   // adds a watch / unwatch button to each row
+ *     onContext: fn(ev, { path, value, keyText, container })|null, // right-click
+ *     maxRows: 4000,          // more rows than this are drawn a window at a time
  *     onToggle: fn(path)      // called after a row is expanded or collapsed
- *   })  ->  { rows, matched, truncated }
+ *   })  ->  { rows, matched, truncated, scrollTo(path), windowed }
  */
 
 import { SEP, isContainer, entriesOf, summarise, collectMatches } from '../core/json-tree-model.js';
-
-/* How long a change stays marked. The Data tab rebuilds its tree on every
- * poll, so it has to remember changed paths for this long or they vanish
- * after one render. Structure updates cells in place and needs no such
- * memory — but both fade over the same --flash-duration in the CSS. */
-export const HIGHLIGHT_MS = 3000;
+import { caseInsensitive } from '../core/text-search.js';
+import { writeClipboard } from './clipboard.js';
+import { numberLines, scrollerOf, renderWindowed } from './tree-window.js';
+import './tree-copy.js'; // registers the copy handler that goes with the tree rows
 
 const LONG_TEXT = 600;
 
@@ -29,16 +37,16 @@ function highlight(text, query) {
   const frag = document.createDocumentFragment();
   if (!query) { frag.appendChild(document.createTextNode(text)); return frag; }
 
-  const haystack = text.toLowerCase();
+  const finder = caseInsensitive(query);
   let from = 0;
-  let at = haystack.indexOf(query);
-  while (at !== -1) {
-    frag.appendChild(document.createTextNode(text.slice(from, at)));
+  let found = finder.exec(text);
+  while (found) {
+    frag.appendChild(document.createTextNode(text.slice(from, found.index)));
     const mark = document.createElement('mark');
-    mark.textContent = text.slice(at, at + query.length);
+    mark.textContent = found[0];
     frag.appendChild(mark);
-    from = at + query.length;
-    at = haystack.indexOf(query, from);
+    from = found.index + found[0].length;
+    found = finder.exec(text);
   }
   frag.appendChild(document.createTextNode(text.slice(from)));
   return frag;
@@ -50,6 +58,9 @@ function valueSpan(value, ctx, path) {
 
   const type = typeof value;
   span.className = `v v-${type}`;
+  /* The real text of a string, kept apart from the tooltip (which can carry a
+   * "Was: …" line) so copying a selection never picks the tooltip up. */
+  if (type === 'string') span.dataset.text = value;
   const text = type === 'string' ? JSON.stringify(value) : String(value);
 
   span.appendChild(document.createTextNode(' '));
@@ -97,24 +108,10 @@ function copyButton(label, title, getText) {
   button.addEventListener('click', (ev) => {
     ev.stopPropagation();
     const text = getText();
-    const done = () => {
+    writeClipboard(text).then(() => {
       button.textContent = '✓';
       setTimeout(() => { button.textContent = label; }, 1000);
-    };
-    const fallback = () => {
-      const area = document.createElement('textarea');
-      area.value = text;
-      document.body.appendChild(area);
-      area.select();
-      document.execCommand('copy');
-      area.remove();
-      done();
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done, fallback);
-    } else {
-      fallback();
-    }
+    }, () => {});
   });
   return button;
 }
@@ -125,22 +122,63 @@ const TWISTY_PX = 15;
 
 function indentRow(row, depth) {
   row.dataset.depth = String(depth);
-  row.style.paddingLeft = `${4 + TWISTY_PX + depth * 12}px`;
+  row.style.paddingLeft = `calc(var(--gutter, 0px) + ${4 + TWISTY_PX + depth * 12}px)`;
   row.style.textIndent = `-${TWISTY_PX}px`;
 }
 
-function renderNode(parent, keyText, value, path, depth, ctx) {
-  if (ctx.rows >= ctx.maxRows) return;
+/* The old value of a marked row, for its tooltip. */
+const BEFORE_MAX = 300;
+
+export function describeBefore(value) {
+  if (value === undefined) return 'not set';
+  let text;
+  try { text = JSON.stringify(value); } catch { text = String(value); }
+  if (text === undefined) text = String(value);
+  return text.length > BEFORE_MAX ? `${text.slice(0, BEFORE_MAX)}…` : text;
+}
+
+/* The rows a tree shows, as plain descriptors, before any DOM exists: what is
+ * open, what the filter lets through, and where each closing brace goes. Kept
+ * apart from drawing so a big payload can be drawn a window at a time. */
+function collectRows(value, keyText, path, depth, ctx, out) {
+  if (out.length >= ctx.hardCap) { ctx.capped = true; return; }
   if (ctx.filtering && !ctx.visible.has(path)) return;
 
   const container = isContainer(value);
   const open = container && (ctx.filtering || ctx.expanded.has(path));
+  out.push({ keyText, value, path, depth, container, open, closing: false });
+  if (!container || !open) return;
 
+  entriesOf(value).forEach(([childKey, childValue]) => {
+    collectRows(childValue, childKey, path ? path + SEP + childKey : childKey, depth + 1, ctx, out);
+  });
+  out.push({ keyText: '', value, path, depth, container, open, closing: true });
+}
+
+function buildRow(desc, ctx) {
+  const { keyText, value, path, depth, container, open } = desc;
   const row = document.createElement('div');
   row.className = 'row';
   indentRow(row, depth);
+
+  if (desc.closing) {
+    const pad = document.createElement('span');
+    pad.className = 'twisty is-leaf';
+    row.appendChild(pad);
+    const brace = document.createElement('span');
+    brace.className = 'punc';
+    brace.textContent = Array.isArray(value) ? ']' : '}';
+    row.appendChild(brace);
+    return row;
+  }
+
+  row.dataset.path = path;
   if (ctx.changed && ctx.changed.has(path)) row.classList.add('is-changed');
-  ctx.rows++;
+  const marked = ctx.touched && ctx.touched.has(path);
+  if (marked) row.classList.add('is-touched');
+  const was = marked && ctx.before && ctx.before.has(path) ? `Was: ${describeBefore(ctx.before.get(path))}` : '';
+  if (was) row.title = was;
+  if (ctx.focus !== null && ctx.focus === path) row.classList.add('is-focus');
 
   const twisty = document.createElement('span');
   twisty.className = `twisty${container ? '' : ' is-leaf'}`;
@@ -169,141 +207,110 @@ function renderNode(parent, keyText, value, path, depth, ctx) {
       ctx.onToggle(path);
     });
   } else {
-    row.appendChild(valueSpan(value, ctx, path));
+    const span = valueSpan(value, ctx, path);
+    if (was) span.title = `${span.title}\n${was}`;
+    row.appendChild(span);
   }
 
   const tools = document.createElement('span');
   tools.className = 'row-tools';
-  tools.appendChild(copyButton('copy value', container ? 'Copy this branch as JSON' : 'Copy this value', () => copyValueOf(value)));
+  tools.appendChild(copyButton('copy value', container ? 'Copy this branch as JSON' : 'Copy this value',
+    () => copyValueOf(ctx.transform(value))));
+  if (ctx.onPin) {
+    const pinned = ctx.pinned && ctx.pinned.has(path);
+    tools.appendChild(plainButton(pinned ? 'unwatch' : 'watch',
+      pinned ? 'Remove this path from the watch list' : 'Keep this value in view in the watch list',
+      () => ctx.onPin(path)));
+  }
+  const jumpTitle = ctx.onJump ? (ctx.jumpLabel ? ctx.jumpLabel(path) : 'Select the element that owns this value in the Structure tab') : null;
+  if (jumpTitle) tools.appendChild(plainButton('in structure', jumpTitle, () => ctx.onJump(path)));
   row.appendChild(tools);
 
-  parent.appendChild(row);
-  if (!container || !open) return;
-
-  entriesOf(value).forEach(([childKey, childValue]) => {
-    const childPath = path ? path + SEP + childKey : childKey;
-    renderNode(parent, childKey, childValue, childPath, depth + 1, ctx);
-  });
-
-  if (ctx.rows < ctx.maxRows) {
-    const close = document.createElement('div');
-    close.className = 'row';
-    indentRow(close, depth);
-    const pad = document.createElement('span');
-    pad.className = 'twisty is-leaf';
-    close.appendChild(pad);
-    const brace = document.createElement('span');
-    brace.className = 'punc';
-    brace.textContent = Array.isArray(value) ? ']' : '}';
-    close.appendChild(brace);
-    parent.appendChild(close);
-    ctx.rows++;
+  if (ctx.onContext) {
+    row.addEventListener('contextmenu', (ev) => {
+      ev.preventDefault();
+      ctx.onContext(ev, { path, value, keyText, container });
+    });
   }
+
+  return row;
 }
+
+function plainButton(label, title, action) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'row-copy';
+  button.textContent = label;
+  button.title = title;
+  button.addEventListener('click', (ev) => { ev.stopPropagation(); action(); });
+  return button;
+}
+
+/* Past this many rows nothing more is drawn or listed: a tree that big is
+ * better filtered. Far beyond what windowing needs to cope. */
+const HARD_CAP = 250000;
 
 export function renderJsonTree(parent, rootKey, value, opts = {}) {
   const ctx = {
-    rows: 0,
-    maxRows: opts.maxRows || 4000,
+    capped: false,
+    hardCap: HARD_CAP,
     expanded: opts.expanded || new Set(['']),
     expandedText: opts.expandedText || new Set(),
     changed: opts.changed || null,
     changedBranch: opts.changedBranch || null,
+    touched: opts.touched || null,
+    before: opts.before || null,
+    focus: opts.focus === undefined ? null : opts.focus,
+    pinned: opts.pinned || null,
+    transform: opts.transform || ((v) => v),
+    onJump: opts.onJump || null,
+    jumpLabel: opts.jumpLabel || null,
+    onPin: opts.onPin || null,
+    onContext: opts.onContext || null,
     onToggle: opts.onToggle || (() => {}),
     q: '',
     filtering: false,
     visible: null
   };
 
+  /* A previous windowed draw into this scroller left a scroll listener behind;
+   * whatever is drawn now, it must go. */
+  const previousScroller = scrollerOf(parent, opts.scroller);
+  if (previousScroller.__vwinCleanup) previousScroller.__vwinCleanup();
+
   const query = (opts.filter || '').trim().toLowerCase();
+  let visible = null;
   if (query) {
-    const visible = new Set();
+    visible = new Set();
     collectMatches(value, '', '', query, visible);
-    if (!visible.size) return { rows: 0, matched: false, truncated: false };
     ctx.q = query;
+  }
+  if (opts.only) {
+    visible = visible ? new Set([...visible].filter((path) => opts.only.has(path))) : opts.only;
+  }
+  if (visible) {
+    if (!visible.size) return { rows: 0, matched: false, truncated: false, scrollTo: () => false };
     ctx.filtering = true;
     ctx.visible = visible;
   }
 
+  const rows = [];
+  collectRows(value, rootKey, '', 0, ctx, rows);
+
+  if (rows.length > (opts.maxRows || 4000)) {
+    const scrollTo = renderWindowed(parent, rows, (desc) => buildRow(desc, ctx), opts.scroller);
+    return { rows: rows.length, matched: true, truncated: ctx.capped, scrollTo, windowed: true };
+  }
+
+  numberLines(parent, rows.length);
   const frag = document.createDocumentFragment();
-  renderNode(frag, rootKey, value, '', 0, ctx);
+  rows.forEach((desc) => frag.appendChild(buildRow(desc, ctx)));
   parent.appendChild(frag);
 
-  return { rows: ctx.rows, matched: true, truncated: ctx.rows >= ctx.maxRows };
-}
-
-/* ------------------------------------------------------------------ *
- * Copy
- *
- * The tree lays each node out as separate <span>s in a flex row, so a raw
- * browser copy of a multi-row selection comes out as "key", newline, ":",
- * newline, "value". Rebuild the selection as clean, indented key: value text
- * instead.
- * ------------------------------------------------------------------ */
-
-function cellText(row, isRoot) {
-  const keyEl = row.querySelector(':scope > .k');
-  const puncEl = row.querySelector(':scope > .punc');
-  const previewEl = row.querySelector(':scope > .preview');
-  const valueEl = row.querySelector(':scope > .v');
-
-  if (!keyEl && puncEl) return puncEl.textContent; // lone closing brace
-
-  /* JSON syntax: object keys are quoted, array items carry no key at all, and
-   * the root row is just its opening brace. */
-  const keyText = keyEl ? keyEl.textContent : '';
-  const isIndex = keyEl && keyEl.classList.contains('is-index');
-  const prefix = isRoot || isIndex ? '' : `${JSON.stringify(keyText)}: `;
-
-  if (previewEl) return prefix + previewEl.textContent.trim(); // '{'  /  '{3 keys}'
-  if (!valueEl) return prefix.trimEnd();
-
-  const moreToggle = valueEl.querySelector('.v-more');
-  if (moreToggle && valueEl.classList.contains('v-string')) {
-    return prefix + JSON.stringify(valueEl.getAttribute('title') || '');
-  }
-  const clone = valueEl.cloneNode(true);
-  const clonedToggle = clone.querySelector('.v-more');
-  if (clonedToggle) clonedToggle.remove();
-  return prefix + clone.textContent.trim();
-}
-
-document.addEventListener('copy', (ev) => {
-  const selection = window.getSelection && window.getSelection();
-  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
-
-  let anchor = selection.anchorNode;
-  anchor = anchor && (anchor.nodeType === 1 ? anchor : anchor.parentNode);
-  if (!anchor || !anchor.closest) return;
-
-  const tree = anchor.closest('.viewport, .detail-body, .log-detail');
-  if (!tree || !tree.querySelector('.row')) return;
-
-  const allRows = [...tree.querySelectorAll('.row')];
-  const depthOf = (row) => Number(row.dataset.depth) || 0;
-  const isClosing = (row) => !row.querySelector(':scope > .k');
-  const isOpening = (row) => {
-    const preview = row.querySelector(':scope > .preview');
-    return !!preview && /[{[]\s*$/.test(preview.textContent);
+  const scrollTo = (path) => {
+    const row = [...parent.querySelectorAll('.row')].find((node) => node.dataset.path === path);
+    if (row && row.scrollIntoView) row.scrollIntoView({ block: 'center' });
+    return !!row;
   };
-
-  const picked = allRows
-    .map((row, index) => ({ row, index }))
-    .filter(({ row }) => selection.containsNode(row, true));
-
-  /* Comma between siblings, as in JSON: a line gets one when another line
-   * follows it in the copy and the next row of the tree is a sibling (same
-   * depth, not a closing brace) and this row doesn't open a branch. */
-  const lines = picked.map(({ row, index }, position) => {
-    const depth = depthOf(row);
-    let text = '  '.repeat(depth) + cellText(row, depth === 0);
-    const next = allRows[index + 1];
-    const hasSiblingNext = next && depthOf(next) === depth && !isClosing(next);
-    if (position < picked.length - 1 && hasSiblingNext && !isOpening(row)) text += ',';
-    return text;
-  });
-  if (!lines.length || !ev.clipboardData) return;
-
-  ev.clipboardData.setData('text/plain', lines.join('\n'));
-  ev.preventDefault();
-});
+  return { rows: rows.length, matched: true, truncated: ctx.capped, scrollTo, windowed: false };
+}

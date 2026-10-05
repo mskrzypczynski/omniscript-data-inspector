@@ -12,6 +12,11 @@ OmniStudio **OmniScripts** while you build and debug them:
 - **Remote actions** — the Apex / Data Mapper / Integration Procedure calls the
   page makes, decoded, with input, output and options per call.
 
+The tabs link to each other (Show in Data / in structure, a Calls tab per
+element), explain why an element is hidden, mark and navigate changes, compare
+payloads and calls, and can mask values before anything is copied or exported.
+Press `?` in the panel for everything it does and the keyboard shortcuts.
+
 ## Install
 
 From the [Chrome Web Store](https://chromewebstore.google.com/), or load unpacked:
@@ -32,9 +37,14 @@ Two layers, one-directional:
 - **`src/core/`** — pure domain logic (decoding remote-action payloads,
   reading an OmniScript's structure, formatting JSON tree rows). Plain
   functions on plain objects, no DOM, no `chrome.*`. Fully unit-tested.
-- **`src/ui/`** — DOM rendering and `chrome.devtools.*` wiring, one file per
-  tab plus the shared scope bar and panel shell. Imports from `src/core/`
-  freely; `src/core/` never imports from here.
+- **`src/ui/`** — DOM rendering and `chrome.devtools.*` wiring. One entry file
+  per tab (`data-tab.js`, `structure-tab.js`, `actions-tab.js`) owns that
+  tab's state, polling and wiring; the pieces it draws live beside it in
+  `src/ui/data/` and `src/ui/structure/` (watch strip, compare panel, row menu,
+  element list, detail pane, …). Shared building blocks — the JSON tree
+  (`json-tree-view.js`, `tree-window.js`, `tree-copy.js`), the scope bar
+  (`targets.js`), panel shell, toast, context menu — sit at the top level.
+  Imports from `src/core/` freely; `src/core/` never imports from here.
 
 One exception: the `hostScan` / `hostFetch` / `frameScan` functions in
 `src/ui/targets.js` are shipped into the inspected page by stringifying them

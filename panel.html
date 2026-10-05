@@ -11,16 +11,23 @@
       <span>OmniScript</span>
       <select id="target"></select>
     </label>
-    <label class="field">
-      <span>Frame</span>
-      <select id="frame" title="Limit the list to one document, or leave on All frames"></select>
-    </label>
-    <label class="field checkbox" title="Child element components expose the same properties as their OmniScript. Off by default.">
-      <input id="show-nested" type="checkbox" />
-      <span>Nested</span>
+    <button id="advanced" class="switch" role="switch" aria-checked="false" title="Show the less common controls: Nested here; change navigation, payload comparison and Reveal element on Data; the error, slow-call and non-OmniStudio filters on Remote actions; four extra options on Structure. Turning it off puts them back to their defaults."><span class="switch-track"><span class="switch-knob"></span></span><span>Advanced</span></button>
+    <label class="field checkbox mask-switch" title="Replace strings and numbers with placeholders in everything that leaves the panel: Copy JSON, Save file, the per-row copy value button, the Structure value copy and the Remote actions export. Structure and keys are kept. Not remembered between sessions.">
+      <input id="mask-values" type="checkbox" />
+      <span>Mask values</span>
     </label>
     <button id="rescan" class="icon-btn tiny" title="Look for frames and OmniScripts again">Rescan</button>
     <button id="help" class="icon-btn tiny help-btn" title="What this tab does" aria-expanded="false">?</button>
+    <div class="scope-extra adv">
+      <label class="field">
+        <span>Frame</span>
+        <select id="frame" title="Limit the list to one document, or leave on All frames"></select>
+      </label>
+      <label class="field checkbox" title="Child element components expose the same properties as their OmniScript. Off by default.">
+        <input id="show-nested" type="checkbox" />
+        <span>Nested</span>
+      </label>
+    </div>
   </header>
 
   <nav class="tabstrip" role="tablist">
@@ -59,10 +66,30 @@
         <button id="expand" class="icon-btn" title="Expand everything">Expand all</button>
         <button id="collapse" class="icon-btn" title="Collapse to the top level">Collapse all</button>
         <button id="copy" class="icon-btn">Copy JSON</button>
+        <label class="field checkbox" hidden>
+          <input id="raw-wrap" type="checkbox" />
+          <span>Wrap</span>
+        </label>
         <button id="download" class="icon-btn" title="Writes the payload to a file. It may contain org data — handle it accordingly.">Save file</button>
-        <button id="select" class="icon-btn" title="Reveal the element in Elements and expose it as $omni">Reveal element</button>
+        <button id="select" class="icon-btn adv" title="Reveal the element in Elements and expose it as $omni">Reveal element</button>
+      </div>
+
+      <div class="bar adv">
+        <span class="bar-label">Changes</span>
+        <label class="field checkbox" title="Show only the values that changed since the marks were cleared">
+          <input id="changed-only" type="checkbox" />
+          <span>Changed only</span>
+        </label>
+        <button id="prev-change" class="icon-btn" title="Jump to the previous marked change">◀ Prev</button>
+        <button id="next-change" class="icon-btn" title="Jump to the next marked change">Next ▶</button>
+        <span id="change-count" class="bar-note">none marked</span>
+        <button id="clear-changes" class="icon-btn" title="Forget which values changed">Clear marks</button>
+        <button id="compare-toggle" class="icon-btn" title="Diff two of the last payloads read: what changed between them">Compare payloads</button>
       </div>
     </header>
+
+    <div id="watch" class="bar watch" hidden></div>
+    <div id="compare-panel" class="compare" hidden></div>
 
     <main id="viewport" class="viewport" tabindex="0"></main>
   </section>
@@ -73,13 +100,17 @@
       <div class="bar">
         <button id="struct-refresh" class="icon-btn">Refresh</button>
         <button id="struct-current" class="icon-btn" title="Select and scroll to the step the OmniScript is on now">Current step</button>
+        <label class="field checkbox adv" title="Keep the current step selected as the script moves on">
+          <input id="struct-follow" type="checkbox" />
+          <span>Follow step</span>
+        </label>
 
         <label class="field">
           <span>Definition</span>
           <input id="struct-prop" type="text" value="jsonDef" spellcheck="false" size="10" />
         </label>
 
-        <input id="struct-filter" type="search" placeholder="Filter by name, type or label" spellcheck="false" />
+        <input id="struct-filter" type="search" placeholder="Filter by name, type, label or label text" spellcheck="false" />
 
         <button id="struct-expand" class="icon-btn" title="Expand every section">Expand all</button>
         <button id="struct-collapse" class="icon-btn" title="Collapse every section">Collapse all</button>
@@ -87,6 +118,21 @@
         <label class="field checkbox">
           <input id="struct-actions-only" type="checkbox" />
           <span>Actions only</span>
+        </label>
+
+        <label class="field checkbox adv" title="Fold each step once the script has passed it, so the area you are working in stays in view. Opens again if the script returns to it.">
+          <input id="struct-autocollapse" type="checkbox" />
+          <span>Collapse done steps</span>
+        </label>
+
+        <label class="field checkbox adv" title="Outline the hovered element's component on the inspected page (best effort: needs the element's lwcId from the definition)">
+          <input id="struct-hover" type="checkbox" />
+          <span>Highlight on hover</span>
+        </label>
+
+        <label class="field checkbox adv" title="Hide elements that are not shown right now: their show rules are false, or a parent is hidden">
+          <input id="struct-visible-only" type="checkbox" />
+          <span>Visible only</span>
         </label>
       </div>
     </header>
@@ -106,7 +152,18 @@
 
         <input id="log-filter" type="search" placeholder="Filter by class, method or URL" spellcheck="false" />
 
-        <label class="field checkbox">
+        <label class="field checkbox adv" title="Show only calls that failed, for any reason the row marks as failed">
+          <input id="log-errors-only" type="checkbox" />
+          <span>Errors only</span>
+        </label>
+
+        <label class="field adv" title="Show only calls that took at least this many milliseconds. 0 turns it off.">
+          <span>Slower than</span>
+          <input id="log-slow" type="number" min="0" step="100" placeholder="0" size="5" class="narrow" />
+          <span>ms</span>
+        </label>
+
+        <label class="field checkbox adv">
           <input id="log-only-omni" type="checkbox" checked />
           <span>OmniStudio only</span>
         </label>

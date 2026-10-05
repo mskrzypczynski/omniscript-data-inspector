@@ -23,7 +23,6 @@ export function makeResolver(header) {
     hasLabels: Object.keys(labels).length > 0,
     /* Is the key present in the map at all? (Absence is the breakage.) */
     has(key) {
-      // Object.hasOwn needs Chrome 93; manifest.json's floor is 88.
       return !!key && Object.prototype.hasOwnProperty.call(labels, key);
     },
     /* Resolve a key to its text; '' when absent, tolerant of value shape. */
@@ -165,6 +164,20 @@ export function optionLabelMap(propertySet, labelResolver) {
   return any ? map : null;
 }
 
+/* Everything the filter should find an element by, lowercased: its name and
+ * type, its label, and every custom-label key it uses together with the text
+ * that key resolves to — so typing a word from the screen finds the element
+ * even in a multi-language script where the label is only a key. */
+export function searchTextOf(node, propertySet, label, labelKey, labelResolver) {
+  const parts = [node.name, node.type, label, labelKey];
+  translatableKeys(node, propertySet).forEach((entry) => {
+    parts.push(entry.key);
+    const resolved = labelResolver.key(entry.key);
+    if (resolved) parts.push(stripHtml(resolved));
+  });
+  return parts.filter(Boolean).join(' ').toLowerCase();
+}
+
 export function flatten(definition, header) {
   const out = [];
   const labelMap = (header && header.labelMap) || {};
@@ -185,6 +198,8 @@ export function flatten(definition, header) {
       const propertySet = node.propSetMap || {};
       const key = `${path}/${node.name}#${out.length}`;
       const showExpr = describeShow(propertySet.show);
+      const label = elementLabel(node, propertySet, labelResolver);
+      const labelKey = labelKeyOf(node, propertySet);
       const isSetValues = /set ?values/i.test(node.type || '');
       out.push({
         key,
@@ -192,8 +207,10 @@ export function flatten(definition, header) {
         hasChildren: false, // filled in after the walk
         name: node.name,
         type: node.type,
-        label: elementLabel(node, propertySet, labelResolver),
-        labelKey: labelKeyOf(node, propertySet),
+        label,
+        labelKey,
+        lwcId: typeof node.lwcId === 'string' ? node.lwcId : '',
+        searchText: searchTextOf(node, propertySet, label, labelKey, labelResolver),
         missingLabels: missingLabels(node, propertySet, labelResolver),
         /* Exact location of the value in the data JSON, best available. */
         jsonPath: node.JSONPath || node.jsonPath || labelMap[node.name] || '',
