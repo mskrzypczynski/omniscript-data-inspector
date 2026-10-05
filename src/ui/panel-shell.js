@@ -22,12 +22,12 @@ const HELP = {
     title: 'Data',
     lede: 'The JSON the selected OmniScript is holding right now, re-read on a timer.',
     sections: [['This tab', [
-      ['Property', 'Any property name, not just jsonDataStr. Point it at a state object or anything else the component exposes.'],
+      ['Property', 'Any property name, not just jsonDataStr. Click the field to list what the selected element exposes (with each value\'s type), type to fuzzy-filter ("jsd" finds jsonDataStr), arrows and Enter to pick. A name that is not listed can still be typed.'],
       ['Amber highlight', 'A value that changed since the previous read. A collapsed branch containing a change is marked with a dot.'],
       ['Reveal element', 'Selects the host in the Elements tab and leaves it on $omni, so you can poke at it in the Console.'],
-      ['Auto-refresh', 'Re-reads once a second. Untick it for manual mode, where the data is read only when you press Refresh. Polling stops while the panel is off screen. While you have text selected in the tree, updates wait until you release the selection so it can be copied.'],
+      ['Auto-refresh', 'Re-reads once a second. Untick it for manual mode, where the data is read only when you press Refresh. Polling stops while the panel is off screen. While you have text selected in the tree or the pointer is on a copy button, updates wait until you release the selection so it can be copied.'],
       ['Left the page', 'If the OmniScript disappears (for example the page navigated), the last data read stays on screen, marked as stale, until you pick another OmniScript or a new one appears.'],
-      ['Copy buttons', 'Hover a row in any tree for ⧉ (copy the value, or the whole branch as JSON) and ⌖ (copy its path, e.g. root.a[0].b, for the Console). Dragging to select several rows still copies them as clean indented text.'],
+      ['Copy button', 'Hover a row in any tree for copy: the value, or the whole branch as JSON. Dragging to select several rows still copies them as clean indented text.'],
       ['Tree / Raw', 'Raw shows pretty-printed JSON. If the property is not valid JSON, the raw value is shown with the parse error.']
     ]]]
   },
@@ -36,7 +36,7 @@ const HELP = {
     title: 'Structure',
     lede: 'Every element the OmniScript is built from, read from its definition and joined to the live data.',
     sections: [['This tab', [
-      ['Definition', 'Which property holds the definition. jsonDef by default; change it if your build names it differently.'],
+      ['Definition', 'Which property holds the definition. jsonDef by default; click the field for the same fuzzy property list as the Data tab.'],
       ['Name', 'Rows read name (label): API name first, then the label in parentheses. In a multi-language script labels and Text Block text are custom-label keys, resolved through scriptHeaderDef.allCustomLabels; a single-language script stores the text on the element. Text Blocks show their text (textKey or text). The detail pane shows the underlying label / text key, and the status bar shows the script language.'],
       ['Glyphs', '▤ step · ⚡ action · ☑ choice · ✎ input · ¶ display · ▦ block · ⊘ validation / set errors / messaging · <> custom component. Hover for the exact type.'],
       ['! ? ↗ ⚠', 'Required · has show/hide conditions (hover for the expression) · calls a Data Mapper or Integration Procedure · a custom-label key the element uses (label, Text Block text, help text or a manually-entered choice option) is missing from allCustomLabels — one missing key breaks a multi-language OmniScript; hover for which.'],

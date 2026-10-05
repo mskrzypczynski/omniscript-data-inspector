@@ -186,6 +186,46 @@ function hostFetch(DATA_PROP, DEF_PROP, IDX, WANTED) {
   }
 }
 
+/* Names of the properties the host at IDX exposes, for the property picker.
+ * Walks the prototype chain up to (not including) the generic DOM base classes,
+ * since @api properties live on the component's prototype as accessors.
+ *
+ * Same self-containment rule as hostScan; relies on window.__omniHosts, which
+ * hostScan and hostFetch both refresh. */
+function hostProps(IDX) {
+  try {
+    const node = window.__omniHosts && window.__omniHosts[IDX];
+    if (!node) return { ok: true, props: [] };
+
+    const seen = {};
+    const props = [];
+    let target = node;
+    let guard = 0;
+
+    while (target && guard++ < 12 && target !== Object.prototype && target !== HTMLElement.prototype &&
+           target !== Element.prototype && target !== Node.prototype) {
+      Object.getOwnPropertyNames(target).forEach((name) => {
+        if (seen[name] || name === 'constructor' || name.charAt(0) === '_' || name.charAt(0) === '$') return;
+        seen[name] = true;
+
+        let type;
+        try {
+          const value = node[name];
+          if (typeof value === 'function') return;
+          type = value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value;
+        } catch { type = 'error'; }
+        props.push({ name, type });
+      });
+      target = Object.getPrototypeOf(target);
+    }
+
+    props.sort((a, b) => a.name.localeCompare(b.name));
+    return { ok: true, props: props.slice(0, 500) };
+  } catch {
+    return { ok: false, props: [] };
+  }
+}
+
 /* Same self-containment rule as hostScan. */
 function frameScan() {
   try {
@@ -431,6 +471,15 @@ function fetchProperty(which, callback) {
   });
 }
 
+function listProps(callback) {
+  const host = selected();
+  if (!host) { callback([]); return; }
+  const expression = `(${hostProps.toString()})(${JSON.stringify(host.local)})`;
+  evalOnInspectedPage(host.frame, expression, (result) => {
+    callback(result && result.ok ? result.props : []);
+  });
+}
+
 function mount(nodes) {
   el.target = nodes.target;
   el.frame = nodes.frame;
@@ -485,6 +534,7 @@ export const Targets = {
   mount,
   refresh,
   fetch: fetchProperty,
+  listProps,
   evalOn: evalOnInspectedPage,
   selected,
   hosts: () => state.hosts,
