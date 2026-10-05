@@ -27,7 +27,7 @@ const HELP = {
       ['Reveal element', 'Selects the host in the Elements tab and leaves it on $omni, so you can poke at it in the Console.'],
       ['Auto-refresh', 'Re-reads once a second. Untick it for manual mode, where the data is read only when you press Refresh. Polling stops while the panel is off screen. While you have text selected in the tree or the pointer is on a copy button, updates wait until you release the selection so it can be copied.'],
       ['Left the page', 'If the OmniScript disappears (for example the page navigated), the last data read stays on screen, marked as stale, until you pick another OmniScript or a new one appears.'],
-      ['Copy button', 'Hover a row in any tree for copy: the value as JSON (strings keep their quotes), or the whole branch. Dragging to select several rows still copies them as clean indented text.'],
+      ['Copy value button', 'Hover a row in any tree for copy value: the value as JSON (strings keep their quotes), or the whole branch. Dragging to select several rows still copies them as clean indented text.'],
       ['Tree / Raw', 'Raw shows pretty-printed JSON. If the property is not valid JSON, the raw value is shown with the parse error.']
     ]]]
   },

@@ -200,35 +200,25 @@ button:active { background: var(--bg-alt); }
 }
 
 .row {
-  display: flex;
-  align-items: flex-start;
-  gap: 3px;
+  /* One inline text flow, not flex items: each flex item is its own block, and
+   * a selection painted across blocks leaves highlighted line-end blocks and
+   * unhighlighted holes between key, colon and value. */
+  display: block;
   padding: 0 8px 0 0;
   white-space: pre-wrap;
-}
-
-/* The key, colon and container preview never shrink. Only the value does —
- * otherwise a long string squeezes the key down to a single character per
- * line and it renders vertically. */
-.row > .k,
-.row > .punc,
-.row > .preview,
-.row > .twisty { flex: 0 0 auto; white-space: pre; }
-
-.row > .v {
-  flex: 1 1 auto;
-  min-width: 0;
-  word-break: break-word;
   overflow-wrap: anywhere;
+  position: relative;
 }
+.row > :not(.row-tools):not(.twisty) { display: inline; }
+.row > .v { word-break: break-word; }
 
 .row:hover { background: var(--bg-alt); }
 
-.row { position: relative; }
 
 /* Floats over the row's right edge so the hover highlight is the only visual
  * change — the button takes no layout space of its own. */
 .row-tools {
+  text-indent: 0;
   position: absolute;
   right: 8px;
   top: 0;
@@ -261,8 +251,10 @@ button:active { background: var(--bg-alt); }
 }
 
 .twisty {
-  flex: none;
+  text-indent: 0;
+  display: inline-block;
   width: 12px;
+  margin-right: 3px;
   text-align: center;
   color: var(--fg-dim);
   cursor: pointer;
@@ -289,6 +281,7 @@ mark {
 
 /* Inline "show all / show less" toggle for long string values. */
 .v-more {
+  user-select: none;
   color: var(--accent);
   cursor: pointer;
   font-style: normal;

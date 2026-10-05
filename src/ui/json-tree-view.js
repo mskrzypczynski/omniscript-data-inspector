@@ -119,6 +119,16 @@ function copyButton(label, title, getText) {
   return button;
 }
 
+/* Indent by depth with a hanging indent of one twisty width, so a value that
+ * wraps continues under the key rather than under the twisty. */
+const TWISTY_PX = 15;
+
+function indentRow(row, depth) {
+  row.dataset.depth = String(depth);
+  row.style.paddingLeft = `${4 + TWISTY_PX + depth * 12}px`;
+  row.style.textIndent = `-${TWISTY_PX}px`;
+}
+
 function renderNode(parent, keyText, value, path, depth, ctx) {
   if (ctx.rows >= ctx.maxRows) return;
   if (ctx.filtering && !ctx.visible.has(path)) return;
@@ -128,7 +138,7 @@ function renderNode(parent, keyText, value, path, depth, ctx) {
 
   const row = document.createElement('div');
   row.className = 'row';
-  row.style.paddingLeft = `${4 + depth * 12}px`;
+  indentRow(row, depth);
   if (ctx.changed && ctx.changed.has(path)) row.classList.add('is-changed');
   ctx.rows++;
 
@@ -164,7 +174,7 @@ function renderNode(parent, keyText, value, path, depth, ctx) {
 
   const tools = document.createElement('span');
   tools.className = 'row-tools';
-  tools.appendChild(copyButton('copy', container ? 'Copy this branch as JSON' : 'Copy this value', () => copyValueOf(value)));
+  tools.appendChild(copyButton('copy value', container ? 'Copy this branch as JSON' : 'Copy this value', () => copyValueOf(value)));
   row.appendChild(tools);
 
   parent.appendChild(row);
@@ -178,7 +188,7 @@ function renderNode(parent, keyText, value, path, depth, ctx) {
   if (ctx.rows < ctx.maxRows) {
     const close = document.createElement('div');
     close.className = 'row';
-    close.style.paddingLeft = `${4 + depth * 12}px`;
+    indentRow(close, depth);
     const pad = document.createElement('span');
     pad.className = 'twisty is-leaf';
     close.appendChild(pad);
@@ -269,14 +279,29 @@ document.addEventListener('copy', (ev) => {
   const tree = anchor.closest('.viewport, .detail-body, .log-detail');
   if (!tree || !tree.querySelector('.row')) return;
 
-  const lines = [];
-  const rows = tree.querySelectorAll('.row');
-  for (const row of rows) {
-    if (!selection.containsNode(row, true)) continue;
-    const px = parseFloat(row.style.paddingLeft) || 4;
-    const depth = Math.max(0, Math.round((px - 4) / 12));
-    lines.push('  '.repeat(depth) + cellText(row, depth === 0));
-  }
+  const allRows = [...tree.querySelectorAll('.row')];
+  const depthOf = (row) => Number(row.dataset.depth) || 0;
+  const isClosing = (row) => !row.querySelector(':scope > .k');
+  const isOpening = (row) => {
+    const preview = row.querySelector(':scope > .preview');
+    return !!preview && /[{[]\s*$/.test(preview.textContent);
+  };
+
+  const picked = allRows
+    .map((row, index) => ({ row, index }))
+    .filter(({ row }) => selection.containsNode(row, true));
+
+  /* Comma between siblings, as in JSON: a line gets one when another line
+   * follows it in the copy and the next row of the tree is a sibling (same
+   * depth, not a closing brace) and this row doesn't open a branch. */
+  const lines = picked.map(({ row, index }, position) => {
+    const depth = depthOf(row);
+    let text = '  '.repeat(depth) + cellText(row, depth === 0);
+    const next = allRows[index + 1];
+    const hasSiblingNext = next && depthOf(next) === depth && !isClosing(next);
+    if (position < picked.length - 1 && hasSiblingNext && !isOpening(row)) text += ',';
+    return text;
+  });
   if (!lines.length || !ev.clipboardData) return;
 
   ev.clipboardData.setData('text/plain', lines.join('\n'));
