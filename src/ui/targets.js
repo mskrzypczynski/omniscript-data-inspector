@@ -226,6 +226,23 @@ function hostProps(IDX) {
   }
 }
 
+/* Reads one top-level field of an object-valued property on the host at IDX
+ * without shipping the whole (possibly huge) payload back to the panel. Used
+ * for the definition's asIndex. Same self-containment rule as hostScan; relies
+ * on window.__omniHosts. */
+function hostPeek(IDX, PROP, FIELD) {
+  try {
+    const node = window.__omniHosts && window.__omniHosts[IDX];
+    if (!node) return { ok: true, value: null };
+    let value = node[PROP];
+    if (typeof value === 'string') value = JSON.parse(value);
+    const field = value && typeof value === 'object' ? value[FIELD] : null;
+    return { ok: true, value: field === undefined ? null : field };
+  } catch {
+    return { ok: false, value: null };
+  }
+}
+
 /* Same self-containment rule as hostScan. */
 function frameScan() {
   try {
@@ -480,6 +497,15 @@ function listProps(callback) {
   });
 }
 
+function peekField(prop, field, callback) {
+  const host = selected();
+  if (!host) { callback(null); return; }
+  const expression = `(${hostPeek.toString()})(${JSON.stringify(host.local)},${JSON.stringify(prop)},${JSON.stringify(field)})`;
+  evalOnInspectedPage(host.frame, expression, (result) => {
+    callback(result && result.ok ? result.value : null);
+  });
+}
+
 function mount(nodes) {
   el.target = nodes.target;
   el.frame = nodes.frame;
@@ -535,6 +561,7 @@ export const Targets = {
   refresh,
   fetch: fetchProperty,
   listProps,
+  peekField,
   evalOn: evalOnInspectedPage,
   selected,
   hosts: () => state.hosts,

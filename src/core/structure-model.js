@@ -198,6 +198,11 @@ export function flatten(definition, header) {
         /* Exact location of the value in the data JSON, best available. */
         jsonPath: node.JSONPath || node.jsonPath || labelMap[node.name] || '',
         depth,
+        indexInParent: typeof node.indexInParent === 'number' ? node.indexInParent : null,
+        /* The runtime sets bShow false on an element whose show condition is
+         * currently false. Absent means "no condition", so only an explicit
+         * false counts as hidden. */
+        shown: node.bShow !== false,
         category: categoryOf(node.type),
         required: propertySet.required === true,
         conditional: !!(propertySet.show && Object.keys(propertySet.show).length),
@@ -443,4 +448,46 @@ export function displayValue(element, value) {
     if (typeof value === 'string' || typeof value === 'number') return withLabel(value);
   }
   return preview(value);
+}
+
+/* Which steps have been reached and which actions have run.
+ *
+ * The runtime stores its position in the definition: `asIndex` is the
+ * indexInParent of the active top-level element. Everything at the top level
+ * (steps and actions alike) sits in one ordered list, so an element with a
+ * lower indexInParent has already been passed, an equal one is where the
+ * script is now, and a higher one is still ahead. A passed element whose show
+ * condition was false (bShow === false) never actually ran, so it is
+ * 'skipped' rather than 'done'.
+ *
+ * Without a numeric activeIndex (older builds) it falls back to the data: a
+ * step or action whose name is a key in the payload counts as reached.
+ *
+ * Returns { [element.key]: 'done' | 'current' | 'skipped' | 'pending' } for
+ * steps and actions only (Set Values are not tracked). */
+export function executionStatus(elements, data, activeIndex) {
+  const out = {};
+  const hasData = !!data && typeof data === 'object' && !Array.isArray(data);
+  const useIndex = typeof activeIndex === 'number';
+  const reached = (element) => hasData && valueFor(data, element.name) !== undefined;
+
+  let lastReached = null;
+  elements.forEach((element) => {
+    const tracked = element.category.key === 'step' ||
+      (element.category.key === 'action' && !element.isSetValues);
+    if (!tracked) return;
+
+    if (useIndex) {
+      if (element.depth !== 0 || element.indexInParent === null) return;
+      if (element.indexInParent > activeIndex) out[element.key] = 'pending';
+      else if (element.indexInParent === activeIndex) out[element.key] = 'current';
+      else out[element.key] = element.shown ? 'done' : 'skipped';
+    } else if (hasData) {
+      out[element.key] = reached(element) ? 'done' : 'pending';
+      if (element.category.key === 'step' && reached(element)) lastReached = element;
+    }
+  });
+
+  if (!useIndex && lastReached) out[lastReached.key] = 'current';
+  return out;
 }

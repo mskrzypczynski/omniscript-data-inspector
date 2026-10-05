@@ -849,3 +849,22 @@ button:disabled:hover { border-color: var(--line); }
 .prop-item.is-current > span:first-child { font-weight: 700; }
 .prop-item.is-current > span:first-child::before { content: '✓ '; }
 .prop-empty { color: var(--fg-dim); font-family: inherit; }
+
+/* Execution progress: steps reached and actions run, inferred from the data */
+.log-row.is-pending:not(.is-selected) .log-name,
+.log-row.is-pending:not(.is-selected) .el-type,
+.log-row.is-skipped:not(.is-selected) .log-name,
+.log-row.is-skipped:not(.is-selected) .el-type { opacity: 0.55; }
+.log-row.is-current .log-name { font-weight: 600; }
+
+/* Progress strip: first column of every Structure row */
+.el-status {
+  flex: none;
+  width: 14px;
+  text-align: center;
+  user-select: none;
+  color: var(--fg-dim);
+}
+.el-status.is-done { color: var(--str); }
+.el-status.is-current { color: var(--accent); }
+.log-row.is-selected .el-status { color: #fff; }

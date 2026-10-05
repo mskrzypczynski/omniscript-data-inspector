@@ -27,7 +27,7 @@ const HELP = {
       ['Reveal element', 'Selects the host in the Elements tab and leaves it on $omni, so you can poke at it in the Console.'],
       ['Auto-refresh', 'Re-reads once a second. Untick it for manual mode, where the data is read only when you press Refresh. Polling stops while the panel is off screen. While you have text selected in the tree or the pointer is on a copy button, updates wait until you release the selection so it can be copied.'],
       ['Left the page', 'If the OmniScript disappears (for example the page navigated), the last data read stays on screen, marked as stale, until you pick another OmniScript or a new one appears.'],
-      ['Copy button', 'Hover a row in any tree for copy: the value, or the whole branch as JSON. Dragging to select several rows still copies them as clean indented text.'],
+      ['Copy button', 'Hover a row in any tree for copy: the value as JSON (strings keep their quotes), or the whole branch. Dragging to select several rows still copies them as clean indented text.'],
       ['Tree / Raw', 'Raw shows pretty-printed JSON. If the property is not valid JSON, the raw value is shown with the parse error.']
     ]]]
   },
@@ -41,6 +41,8 @@ const HELP = {
       ['Glyphs', '▤ step · ⚡ action · ☑ choice · ✎ input · ¶ display · ▦ block · ⊘ validation / set errors / messaging · <> custom component. Hover for the exact type.'],
       ['! ? ↗ ⚠', 'Required · has show/hide conditions (hover for the expression) · calls a Data Mapper or Integration Procedure · a custom-label key the element uses (label, Text Block text, help text or a manually-entered choice option) is missing from allCustomLabels — one missing key breaks a multi-language OmniScript; hover for which.'],
       ['Sections', 'Steps and blocks that contain other elements have a ▾ twisty — click to collapse the section. Everything starts expanded. Collapse all / Expand all act on every section. Collapsing is off while a filter or Actions only is active.'],
+      ['✓ ● –', 'The narrow column at the left edge of the Structure list: ✓ already passed, ● where the script is now, – passed without running because its show condition was false; ones still ahead are dimmed. Read from the definition (asIndex against each element\'s indexInParent) and only for top-level steps and actions.'],
+      ['Current step', 'Selects and scrolls to the step the OmniScript is on now. The status bar shows the asIndex it was read from; "active step: unknown" means the definition did not expose one.'],
       ['Actions only', 'Filters to elements that call something — the script\'s whole integration surface in one list.'],
       ['Value', 'The Value column and Current value tab show the live data. For a radio or select with manual options the stored value is joined with its option label, e.g. US (United States).'],
       ['Visibility tab', 'The element\'s show/hide rule as a readable expression, with the raw definition underneath.'],
