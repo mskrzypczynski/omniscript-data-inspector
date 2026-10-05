@@ -10,6 +10,7 @@ import {
 import { isContainer, addAllPaths } from '../core/json-tree-model.js';
 import { renderJsonTree, HIGHLIGHT_MS } from './json-tree-view.js';
 import { Targets } from './targets.js';
+import { attachPropPicker } from './prop-picker.js';
 
 const state = {
   active: false,
@@ -655,6 +656,8 @@ function mount() {
   document.getElementById('struct-refresh').addEventListener('click', () => {
     Targets.refresh(() => load());
   });
+
+  attachPropPicker(document.getElementById('struct-prop'), (done) => Targets.listProps(done));
 
   document.getElementById('struct-prop').addEventListener('change', (ev) => {
     state.defProp = ev.currentTarget.value.trim() || 'jsonDef';

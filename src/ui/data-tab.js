@@ -9,6 +9,7 @@ import { isContainer, addAllPaths, SEP } from '../core/json-tree-model.js';
 import { formatBytes } from '../core/targets-model.js';
 import { renderJsonTree } from './json-tree-view.js';
 import { Targets } from './targets.js';
+import { attachPropPicker } from './prop-picker.js';
 
 /* How long a change stays marked. Without this the amber and the dot on
  * collapsed branches lasted exactly one render — at a 500 ms poll they were
@@ -54,10 +55,22 @@ function schedule() {
   timer = setTimeout(read, POLL_MS);
 }
 
+/* What the tree on screen depends on. A poll that leaves it unchanged must not
+ * rebuild the DOM: that drops focus and hover from the copy buttons. */
+function viewSignature() {
+  return [state.raw, state.changed.size, state.stale, state.scanError, !!Targets.selected()].join('\u0000');
+}
+
+function refreshView(before) {
+  if (viewSignature() === before) renderStatus(); else render();
+}
+
 function read() {
+  const before = viewSignature();
+
   if (!Targets.selected()) {
     markStale();
-    render();
+    refreshView(before);
     schedule();
     return;
   }
@@ -65,7 +78,7 @@ function read() {
   Targets.fetch(state.prop, (value, error) => {
     if (error) {
       state.scanError = error.value || error.description || error.error || 'The page could not be read.';
-      render();
+      refreshView(before);
       schedule();
       return;
     }
@@ -76,7 +89,7 @@ function read() {
       state.stale = false;
       apply(value);
     }
-    render();
+    refreshView(before);
     schedule();
   });
 }
@@ -94,6 +107,12 @@ function hasTextSelection() {
   if (!selection || selection.isCollapsed || selection.rangeCount === 0) return false;
   const node = selection.anchorNode;
   return !!(node && el.viewport.contains(node));
+}
+
+/* The user is mid-gesture in the tree: selecting text, or pointing at or
+ * focused on a copy button. A rebuild now would swallow the click. */
+function isInteracting() {
+  return hasTextSelection() || !!el.viewport.querySelector('.row-copy:hover, .row-copy:focus');
 }
 
 function apply(raw) {
@@ -177,8 +196,8 @@ function render() {
   renderStatus();
 
   /* Rebuilding the tree drops the user's selection, so a poll must not do it
-   * while they are selecting text to copy. Wait for the selection to clear. */
-  if (hasTextSelection()) { state.renderPending = true; return; }
+   * while they are selecting text or using a copy button. Wait until they stop. */
+  if (isInteracting()) { state.renderPending = true; return; }
   state.renderPending = false;
 
   const viewport = el.viewport;
@@ -418,6 +437,8 @@ function mount() {
 
   el.refresh.addEventListener('click', () => read());
 
+  attachPropPicker(el.prop, (done) => Targets.listProps(done));
+
   el.prop.addEventListener('change', () => {
     state.prop = el.prop.value.trim() || 'jsonDataStr';
     el.prop.value = state.prop;
@@ -455,9 +476,12 @@ function mount() {
   el.download.addEventListener('click', downloadPayload);
   el.select.addEventListener('click', revealElement);
 
-  document.addEventListener('selectionchange', () => {
-    if (state.renderPending && state.active && !hasTextSelection()) render();
-  });
+  const flushPending = () => {
+    if (state.renderPending && state.active && !isInteracting()) render();
+  };
+  document.addEventListener('selectionchange', flushPending);
+  el.viewport.addEventListener('mouseout', () => setTimeout(flushPending, 0));
+  el.viewport.addEventListener('focusout', () => setTimeout(flushPending, 0));
 
   Targets.subscribe((reason) => {
     if (reason === 'selection' || reason === 'props') resetPayload();

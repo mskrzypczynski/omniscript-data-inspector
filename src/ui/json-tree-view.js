@@ -88,17 +88,6 @@ function copyValueOf(value) {
   return value === null ? 'null' : String(value);
 }
 
-/* a.b[0]["odd key"] — usable in the Console. The root copies as its own key. */
-export function pathOf(rootKey, chain) {
-  let out = rootKey;
-  chain.forEach((key) => {
-    if (/^\d+$/.test(key)) out += `[${key}]`;
-    else if (/^[A-Za-z_$][\w$]*$/.test(key)) out += `.${key}`;
-    else out += `[${JSON.stringify(key)}]`;
-  });
-  return out;
-}
-
 function copyButton(label, title, getText) {
   const button = document.createElement('button');
   button.type = 'button';
@@ -130,7 +119,7 @@ function copyButton(label, title, getText) {
   return button;
 }
 
-function renderNode(parent, keyText, value, path, depth, ctx, chain) {
+function renderNode(parent, keyText, value, path, depth, ctx) {
   if (ctx.rows >= ctx.maxRows) return;
   if (ctx.filtering && !ctx.visible.has(path)) return;
 
@@ -175,8 +164,7 @@ function renderNode(parent, keyText, value, path, depth, ctx, chain) {
 
   const tools = document.createElement('span');
   tools.className = 'row-tools';
-  tools.appendChild(copyButton('⧉', container ? 'Copy this branch as JSON' : 'Copy this value', () => copyValueOf(value)));
-  tools.appendChild(copyButton('⌖', 'Copy the path to this value', () => pathOf(ctx.rootKey, chain)));
+  tools.appendChild(copyButton('copy', container ? 'Copy this branch as JSON' : 'Copy this value', () => copyValueOf(value)));
   row.appendChild(tools);
 
   parent.appendChild(row);
@@ -184,7 +172,7 @@ function renderNode(parent, keyText, value, path, depth, ctx, chain) {
 
   entriesOf(value).forEach(([childKey, childValue]) => {
     const childPath = path ? path + SEP + childKey : childKey;
-    renderNode(parent, childKey, childValue, childPath, depth + 1, ctx, chain.concat(childKey));
+    renderNode(parent, childKey, childValue, childPath, depth + 1, ctx);
   });
 
   if (ctx.rows < ctx.maxRows) {
@@ -206,7 +194,6 @@ function renderNode(parent, keyText, value, path, depth, ctx, chain) {
 export function renderJsonTree(parent, rootKey, value, opts = {}) {
   const ctx = {
     rows: 0,
-    rootKey,
     maxRows: opts.maxRows || 4000,
     expanded: opts.expanded || new Set(['']),
     expandedText: opts.expandedText || new Set(),
@@ -229,7 +216,7 @@ export function renderJsonTree(parent, rootKey, value, opts = {}) {
   }
 
   const frag = document.createDocumentFragment();
-  renderNode(frag, rootKey, value, '', 0, ctx, []);
+  renderNode(frag, rootKey, value, '', 0, ctx);
   parent.appendChild(frag);
 
   return { rows: ctx.rows, matched: true, truncated: ctx.rows >= ctx.maxRows };
