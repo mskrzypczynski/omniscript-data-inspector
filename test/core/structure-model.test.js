@@ -8,7 +8,7 @@ import {
   makeResolver, stripHtml, resolveText, elementLabel, missingLabels,
   optionLabelMap, flatten, categoryOf, describeShow, formatRule,
   describeValidation, valueFor, resolvePath, resolveElementValue,
-  displayValue, preview, parseObj
+  displayValue, preview, parseObj, executionStatus
 } from '../../src/core/structure-model.js';
 
 /* ------------------------------------------------------------ makeResolver */
@@ -325,5 +325,60 @@ describe('parseObj', () => {
   it('returns null for empty or unparsable input rather than throwing', () => {
     expect(parseObj('')).toBeNull();
     expect(parseObj('{broken')).toBeNull();
+  });
+});
+
+describe('executionStatus', () => {
+  const definition = { children: [
+    { name: 'Step1', type: 'Step', eleArray: [{ name: 'Name', type: 'Text' }, { name: 'Lookup', type: 'DataRaptor Turbo Action' }] },
+    { name: 'Step2', type: 'Step', eleArray: [] },
+    { name: 'Step3', type: 'Step', eleArray: [] }
+  ] };
+  const elements = flatten(definition, {});
+  const statusOf = (data, activeIndex) => {
+    const status = executionStatus(elements, data, activeIndex);
+    return Object.fromEntries(elements.map((e) => [e.name, status[e.key]]));
+  };
+
+  it('marks reached steps done, the furthest one current, and the rest pending', () => {
+    expect(statusOf({ Step1: { Name: 'x' }, Step2: {} })).toMatchObject({
+      Step1: 'done', Step2: 'current', Step3: 'pending'
+    });
+  });
+
+  it('marks an action done once its name appears in the data', () => {
+    expect(statusOf({ Step1: { Lookup: { ok: true } } })).toMatchObject({ Lookup: 'done', Step1: 'current' });
+    expect(statusOf({ Step1: {} }).Lookup).toBe('pending');
+  });
+
+  it('does not track plain inputs and returns nothing without data', () => {
+    expect(statusOf({ Step1: { Name: 'x' } }).Name).toBeUndefined();
+    expect(executionStatus(elements, undefined)).toEqual({});
+  });
+
+  it('uses asIndex against indexInParent for steps and top-level actions', () => {
+    const indexed = flatten({ children: [
+      { name: 'A', type: 'Step', indexInParent: 0, eleArray: [] },
+      { name: 'DoWork', type: 'Integration Procedure Action', indexInParent: 1 },
+      { name: 'Hidden', type: 'Step', indexInParent: 2, bShow: false, eleArray: [] },
+      { name: 'B', type: 'Step', indexInParent: 3, eleArray: [] },
+      { name: 'C', type: 'Step', indexInParent: 4, eleArray: [] }
+    ] }, {});
+    const status = executionStatus(indexed, {}, 3);
+    expect(Object.fromEntries(indexed.map((e) => [e.name, status[e.key]]))).toEqual({
+      A: 'done', DoWork: 'done', Hidden: 'skipped', B: 'current', C: 'pending'
+    });
+  });
+
+  it('indexes by position among top-level elements, not step count', () => {
+    const indexed = flatten({ children: [
+      { name: 'Prep', type: 'Set Values', indexInParent: 0 },
+      { name: 'S1', type: 'Step', indexInParent: 1, eleArray: [] },
+      { name: 'S2', type: 'Step', indexInParent: 7, eleArray: [] }
+    ] }, {});
+    const status = executionStatus(indexed, {}, 7);
+    expect(status[indexed[0].key]).toBeUndefined();
+    expect(status[indexed[1].key]).toBe('done');
+    expect(status[indexed[2].key]).toBe('current');
   });
 });

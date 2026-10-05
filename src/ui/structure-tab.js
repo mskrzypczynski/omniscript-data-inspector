@@ -5,7 +5,7 @@
  * shared scope bar (targets.js), so this file only asks for two payloads. */
 
 import {
-  flatten, parseObj, resolveElementValue, displayValue, isTextBlock
+  flatten, parseObj, resolveElementValue, displayValue, isTextBlock, executionStatus
 } from '../core/structure-model.js';
 import { isContainer, addAllPaths } from '../core/json-tree-model.js';
 import { renderJsonTree, HIGHLIGHT_MS } from './json-tree-view.js';
@@ -13,6 +13,8 @@ import { Targets } from './targets.js';
 import { attachPropPicker } from './prop-picker.js';
 
 const state = {
+  progress: {},
+  activeIndex: null, // definition.asIndex: the runtime's active step
   active: false,
   visible: true,
   defProp: 'jsonDef',
@@ -88,6 +90,8 @@ function load() {
       return;
     }
 
+    state.activeIndex = typeof definition.asIndex === 'number' ? definition.asIndex : null;
+
     /* scriptHeaderDef is a sibling property: allCustomLabels resolves label
      * text, labelMap gives each element's JSONPath. Optional — the tab works
      * without it. */
@@ -128,7 +132,16 @@ function pulse() {
   if (!state.active || !state.visible || !Targets.selected()) { schedulePulse(); return; }
   Targets.fetch(state.dataProp, (raw) => {
     if (raw !== state.dataRaw) applyData(raw);
-    schedulePulse();
+    Targets.peekField(state.defProp, 'asIndex', (index) => {
+      /* A failed read keeps the last known position instead of wiping the
+       * marks. */
+      if (typeof index === 'number' && index !== state.activeIndex) {
+        state.activeIndex = index;
+        if (updateProgress()) renderList();
+        renderStatus();
+      }
+      schedulePulse();
+    });
   });
 }
 
@@ -142,6 +155,8 @@ function applyData(raw) {
   } catch {
     return;
   }
+
+  if (updateProgress()) renderList();
 
   state.elements.forEach((element) => {
     const cell = state.cells[element.key];
@@ -170,7 +185,38 @@ function visible() {
   });
 }
 
+const STATUS_GLYPH = { done: '✓', current: '●', skipped: '–' };
+
+/* One fixed-width column at the left edge of the row, so progress reads as a
+ * single vertical strip instead of competing with the tags after the name. */
+function statusCell(element, progress) {
+  const cell = document.createElement('span');
+  cell.className = `el-status${progress ? ` is-${progress}` : ''}`;
+  if (!progress || !STATUS_GLYPH[progress]) return cell;
+
+  const isStep = element.category.key === 'step';
+  cell.textContent = STATUS_GLYPH[progress];
+  cell.title = {
+    current: 'The step the OmniScript is on now',
+    skipped: 'Passed without running — its show condition was false',
+    done: isStep ? 'Already passed' : 'Has run'
+  }[progress];
+  return cell;
+}
+
+function progressOf(element) {
+  return state.progress[element.key] || null;
+}
+
+function updateProgress() {
+  const next = executionStatus(state.elements, state.data, state.activeIndex);
+  const changed = JSON.stringify(next) !== JSON.stringify(state.progress);
+  state.progress = next;
+  return changed;
+}
+
 function render() {
+  updateProgress();
   renderList();
   renderDetail();
   renderStatus();
@@ -179,6 +225,11 @@ function render() {
 function listHeader() {
   const row = document.createElement('div');
   row.className = 'log-row log-head';
+  const status = document.createElement('span');
+  status.className = 'el-status';
+  status.title = 'Progress: ✓ passed · ● current · – skipped';
+  row.appendChild(status);
+
   const spacer = document.createElement('span');
   spacer.className = 'twisty is-leaf';
   row.appendChild(spacer);
@@ -211,6 +262,10 @@ function renderRow(element, sectioning) {
   const row = document.createElement('div');
   row.className = 'log-row';
   if (element.key === state.selectedKey) row.classList.add('is-selected');
+
+  const progress = progressOf(element);
+  row.appendChild(statusCell(element, progress));
+  if (progress) row.classList.add(`is-${progress}`);
 
   const twisty = document.createElement('span');
   twisty.className = 'twisty';
@@ -644,14 +699,48 @@ function renderStatus() {
     : 'No definition loaded';
   const host = Targets.selected();
   const lang = state.header && state.header.bpLang ? ` · ${state.header.bpLang}` : '';
-  document.getElementById('status-right').textContent = host ? `${state.defProp} · ${host.label}${lang}` : '';
+  const position = state.activeIndex === null
+    ? ' · active step: unknown'
+    : ` · asIndex ${state.activeIndex}`;
+  document.getElementById('status-right').textContent = host ? `${state.defProp} · ${host.label}${lang}${position}` : '';
 }
 
 /* ----------------------------------------------------------- wiring */
 
+/* Selects the step the OmniScript is on, scrolling it into view. Clears the
+ * filters first if they would hide it. */
+function goToCurrentStep() {
+  const button = document.getElementById('struct-current');
+  const current = state.elements.find((element) =>
+    state.progress[element.key] === 'current' && element.category.key === 'step') ||
+    state.elements.find((element) => state.progress[element.key] === 'current');
+
+  if (!current) {
+    button.textContent = state.elements.length ? 'No current step' : 'Nothing loaded';
+    setTimeout(() => { button.textContent = 'Current step'; }, 1500);
+    return;
+  }
+
+  if (!visible().some((element) => element.key === current.key)) {
+    state.filter = '';
+    state.actionsOnly = false;
+    document.getElementById('struct-filter').value = '';
+    document.getElementById('struct-actions-only').checked = false;
+  }
+
+  state.selectedKey = current.key;
+  resetSelectionState();
+  render();
+
+  const row = el.list.querySelector('.log-row.is-selected');
+  if (row && row.scrollIntoView) row.scrollIntoView({ block: 'center' });
+}
+
 function mount() {
   el.list = document.getElementById('struct-list');
   el.detail = document.getElementById('struct-detail');
+
+  document.getElementById('struct-current').addEventListener('click', goToCurrentStep);
 
   document.getElementById('struct-refresh').addEventListener('click', () => {
     Targets.refresh(() => load());

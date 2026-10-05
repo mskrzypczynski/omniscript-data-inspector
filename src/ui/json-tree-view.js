@@ -81,11 +81,11 @@ function valueSpan(value, ctx, path) {
   return span;
 }
 
-/* Value for the per-row copy button: the bare string (no quotes or escapes)
- * for a string, the literal for other leaves, pretty JSON for a container. */
-function copyValueOf(value) {
-  if (isContainer(value)) return JSON.stringify(value, null, 2);
-  return value === null ? 'null' : String(value);
+/* What the per-row copy button puts on the clipboard: the value as JSON, so a
+ * string keeps its quotes and escapes and a branch is pretty-printed. */
+export function copyValueOf(value) {
+  const json = JSON.stringify(value, null, 2);
+  return json === undefined ? String(value) : json;
 }
 
 function copyButton(label, title, getText) {
@@ -231,7 +231,7 @@ export function renderJsonTree(parent, rootKey, value, opts = {}) {
  * instead.
  * ------------------------------------------------------------------ */
 
-function cellText(row) {
+function cellText(row, isRoot) {
   const keyEl = row.querySelector(':scope > .k');
   const puncEl = row.querySelector(':scope > .punc');
   const previewEl = row.querySelector(':scope > .preview');
@@ -239,18 +239,23 @@ function cellText(row) {
 
   if (!keyEl && puncEl) return puncEl.textContent; // lone closing brace
 
-  const prefix = `${keyEl ? keyEl.textContent : ''}:`;
-  if (previewEl) return prefix + previewEl.textContent; // ' {'  /  ' {3 keys}'
-  if (!valueEl) return prefix;
+  /* JSON syntax: object keys are quoted, array items carry no key at all, and
+   * the root row is just its opening brace. */
+  const keyText = keyEl ? keyEl.textContent : '';
+  const isIndex = keyEl && keyEl.classList.contains('is-index');
+  const prefix = isRoot || isIndex ? '' : `${JSON.stringify(keyText)}: `;
+
+  if (previewEl) return prefix + previewEl.textContent.trim(); // '{'  /  '{3 keys}'
+  if (!valueEl) return prefix.trimEnd();
 
   const moreToggle = valueEl.querySelector('.v-more');
   if (moreToggle && valueEl.classList.contains('v-string')) {
-    return `${prefix} ${JSON.stringify(valueEl.getAttribute('title') || '')}`;
+    return prefix + JSON.stringify(valueEl.getAttribute('title') || '');
   }
   const clone = valueEl.cloneNode(true);
   const clonedToggle = clone.querySelector('.v-more');
   if (clonedToggle) clonedToggle.remove();
-  return prefix + clone.textContent.replace(/\s+$/, '');
+  return prefix + clone.textContent.trim();
 }
 
 document.addEventListener('copy', (ev) => {
@@ -270,7 +275,7 @@ document.addEventListener('copy', (ev) => {
     if (!selection.containsNode(row, true)) continue;
     const px = parseFloat(row.style.paddingLeft) || 4;
     const depth = Math.max(0, Math.round((px - 4) / 12));
-    lines.push('  '.repeat(depth) + cellText(row));
+    lines.push('  '.repeat(depth) + cellText(row, depth === 0));
   }
   if (!lines.length || !ev.clipboardData) return;
 
