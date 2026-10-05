@@ -84,3 +84,70 @@ describe('copyValueOf', () => {
     expect(copyValueOf({ a: [1] })).toBe('{\n  "a": [\n    1\n  ]\n}');
   });
 });
+
+describe('copying a selection', () => {
+  function copyAll(value, expanded) {
+    const container = document.createElement('div');
+    container.className = 'viewport';
+    document.body.appendChild(container);
+    renderJsonTree(container, 'root', value, { expanded: new Set(expanded) });
+
+    const range = document.createRange();
+    range.selectNodeContents(container);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    let copied = null;
+    const event = new Event('copy', { bubbles: true, cancelable: true });
+    event.clipboardData = { setData: (type, text) => { copied = text; } };
+    container.firstChild.dispatchEvent(event);
+    container.remove();
+    return copied;
+  }
+
+  it('copies JSON-shaped lines with commas between siblings', () => {
+    const text = copyAll({ a: 1, b: 'x', c: { d: null } }, ['', 'c']);
+    expect(text).toBe(['{', '  "a": 1,', '  "b": "x",', '  "c": {', '    "d": null', '  }', '}'].join('\n'));
+  });
+});
+
+describe('copying long values', () => {
+  function copyTree(expandedText) {
+    const container = document.createElement('div');
+    container.className = 'viewport';
+    document.body.appendChild(container);
+    const long = 'x'.repeat(700);
+    renderJsonTree(container, 'root', { a: long, b: 1 }, {
+      expanded: new Set(['']),
+      expandedText: new Set(expandedText)
+    });
+    const range = document.createRange();
+    range.selectNodeContents(container);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    let copied = null;
+    const event = new Event('copy', { bubbles: true, cancelable: true });
+    event.clipboardData = { setData: (type, text) => { copied = text; } };
+    container.firstChild.dispatchEvent(event);
+    const hadToggle = container.querySelector('.v-more') !== null;
+    container.remove();
+    return { copied, hadToggle };
+  }
+
+  it('leaves out the show all toggle and copies the whole value', () => {
+    const { copied, hadToggle } = copyTree([]);
+    expect(hadToggle).toBe(true);
+    expect(copied).not.toMatch(/show (all|less)/);
+    expect(copied).toContain(`"a": "${'x'.repeat(700)}"`);
+  });
+
+  it('leaves out the show less toggle when the value is expanded', () => {
+    const { copied, hadToggle } = copyTree(['a']);
+    expect(hadToggle).toBe(true);
+    expect(copied).not.toMatch(/show (all|less)/);
+    expect(copied).toContain(`"a": "${'x'.repeat(700)}"`);
+  });
+});
