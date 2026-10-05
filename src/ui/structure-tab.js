@@ -446,6 +446,7 @@ function mount() {
    * changes rather than keeping a frame or element list of our own. */
   Targets.subscribe((reason) => {
     if (reason === 'list') return; // same script, just a different list around it
+    if (reason === 'navigated') forgetScript(); // the page left: drop what was read from it
     state.selectedKey = null;
     state.collapsed = new Set();
     state.header = null;
@@ -453,6 +454,21 @@ function mount() {
     state.handFolded = new Set();
     if (state.active) load();
   });
+}
+
+/* Drop the definition and data read from the page, and everything derived
+ * from them. */
+function forgetScript() {
+  state.elements = [];
+  state.data = undefined;
+  state.dataRaw = null;
+  state.header = null;
+  state.error = null;
+  state.activeIndex = null;
+  state.progress = {};
+  state.visibility = {};
+  state.cells = {};
+  Shared.setElements([]);
 }
 
 function copySelected() {

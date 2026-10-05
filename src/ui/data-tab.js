@@ -698,8 +698,11 @@ function mount() {
     /* A different script (or property, or page) means a different definition. */
     Shared.setElements([]);
     state.ownersRequested = false;
-    if (reason === 'selection') { state.pins = []; state.watchSig = ''; state.watchPrev = {}; }
-    if (reason === 'selection' || reason === 'props') resetPayload();
+    /* A different script, or a page that has navigated away, means everything
+     * read so far — payload, marks, history, pins — is dropped. */
+    const newScript = reason === 'selection' || reason === 'navigated';
+    if (newScript) { state.pins = []; state.watchSig = ''; state.watchPrev = {}; }
+    if (newScript || reason === 'props') resetPayload();
     if (state.active) { render(); read(); }
   });
 }
