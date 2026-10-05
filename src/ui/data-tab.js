@@ -15,12 +15,16 @@ import { Targets } from './targets.js';
  * gone before you could look at them. */
 const HIGHLIGHT_MS = 3000;
 
+/* Constant poll period; manual mode turns polling off instead. */
+const POLL_MS = 1000;
+
 const state = {
   active: true,
   visible: true,
   prop: 'jsonDataStr',
-  intervalMs: 500,
-  paused: false,
+  live: true,
+  stale: false,
+  renderPending: false,
   view: 'tree',
   filter: '',
   raw: null,
@@ -46,13 +50,13 @@ let timer = null;
 
 function schedule() {
   clearTimeout(timer);
-  if (state.paused || !state.intervalMs || !state.active || !state.visible) return;
-  timer = setTimeout(read, state.intervalMs);
+  if (!state.live || !state.active || !state.visible) return;
+  timer = setTimeout(read, POLL_MS);
 }
 
 function read() {
   if (!Targets.selected()) {
-    apply(null);
+    markStale();
     render();
     schedule();
     return;
@@ -66,10 +70,30 @@ function read() {
       return;
     }
     state.scanError = null;
-    apply(value);
+    if (value === null || value === undefined) {
+      markStale();
+    } else {
+      state.stale = false;
+      apply(value);
+    }
     render();
     schedule();
   });
+}
+
+/* The host went away (navigation, the script finished). Keep what was last
+ * read instead of blanking the view; it is replaced as soon as a host
+ * answers again. */
+function markStale() {
+  if (state.raw === null) { apply(null); return; }
+  state.stale = true;
+}
+
+function hasTextSelection() {
+  const selection = window.getSelection && window.getSelection();
+  if (!selection || selection.isCollapsed || selection.rangeCount === 0) return false;
+  const node = selection.anchorNode;
+  return !!(node && el.viewport.contains(node));
 }
 
 function apply(raw) {
@@ -152,6 +176,11 @@ function diff(a, b, path, out) {
 function render() {
   renderStatus();
 
+  /* Rebuilding the tree drops the user's selection, so a poll must not do it
+   * while they are selecting text to copy. Wait for the selection to clear. */
+  if (hasTextSelection()) { state.renderPending = true; return; }
+  state.renderPending = false;
+
   const viewport = el.viewport;
   viewport.textContent = '';
 
@@ -179,6 +208,11 @@ function render() {
   }
 
   if (state.data === undefined) return;
+
+  if (state.stale) {
+    viewport.appendChild(notice('OmniScript no longer on the page',
+      'Showing the last data read. It will refresh when an OmniScript is found again.', false));
+  }
 
   if (state.view === 'raw') {
     viewport.appendChild(rawBlock(pretty()));
@@ -278,8 +312,8 @@ function renderStatus() {
   el.statusLeft.appendChild(left);
 
   let right = !state.visible ? 'Idle (panel hidden)'
-    : state.paused ? 'Paused'
-      : (state.intervalMs ? 'Live' : 'Manual');
+    : state.stale ? 'Stale (OmniScript gone)'
+      : (state.live ? 'Live' : 'Manual');
   if (state.lastUpdate) right += ` · changed ${state.lastUpdate.toLocaleTimeString()}`;
   if (state.changed.size) right += ` · ${state.changed.size} value(s) updated`;
   el.statusRight.textContent = right;
@@ -300,6 +334,7 @@ function resetPayload() {
   state.data = undefined;
   state.parseError = null;
   state.seeded = false;
+  state.stale = false;
   state.expanded = new Set(['']);
   state.expandedText = new Set();
   state.changed = new Set();
@@ -360,10 +395,9 @@ function revealElement() {
 }
 
 function mount() {
-  el.pause = document.getElementById('pause');
+  el.live = document.getElementById('live');
   el.refresh = document.getElementById('refresh');
   el.prop = document.getElementById('prop');
-  el.interval = document.getElementById('interval');
   el.viewTree = document.getElementById('view-tree');
   el.viewRaw = document.getElementById('view-raw');
   el.filter = document.getElementById('filter');
@@ -376,11 +410,9 @@ function mount() {
   el.statusLeft = document.getElementById('status-left');
   el.statusRight = document.getElementById('status-right');
 
-  el.pause.addEventListener('click', () => {
-    state.paused = !state.paused;
-    el.pause.textContent = state.paused ? 'Resume' : 'Pause';
-    el.pause.classList.toggle('is-on', state.paused);
-    if (!state.paused) read(); else clearTimeout(timer);
+  el.live.addEventListener('change', () => {
+    state.live = el.live.checked;
+    if (state.live) read(); else clearTimeout(timer);
     renderStatus();
   });
 
@@ -391,12 +423,6 @@ function mount() {
     el.prop.value = state.prop;
     resetPayload();
     Targets.setProps(state.prop, null);
-  });
-
-  el.interval.addEventListener('change', () => {
-    state.intervalMs = Number(el.interval.value);
-    schedule();
-    renderStatus();
   });
 
   el.viewTree.addEventListener('click', () => setView('tree'));
@@ -429,8 +455,12 @@ function mount() {
   el.download.addEventListener('click', downloadPayload);
   el.select.addEventListener('click', revealElement);
 
+  document.addEventListener('selectionchange', () => {
+    if (state.renderPending && state.active && !hasTextSelection()) render();
+  });
+
   Targets.subscribe((reason) => {
-    if (reason === 'navigated' || reason === 'selection' || reason === 'props') resetPayload();
+    if (reason === 'selection' || reason === 'props') resetPayload();
     if (state.active) { render(); read(); }
   });
 }

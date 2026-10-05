@@ -23,7 +23,7 @@ const MAX_ENTRIES = 500;
 const state = {
   active: false,
   recording: true,
-  preserve: false,
+  preserve: true,
   onlyOmni: true,
   filter: '',
   entries: [],

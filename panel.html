@@ -35,7 +35,6 @@
   <section id="view-data" class="view" role="tabpanel">
     <header class="toolbar">
       <div class="bar">
-        <button id="pause" class="icon-btn" title="Pause live updates">Pause</button>
         <button id="refresh" class="icon-btn" title="Read the property now">Refresh</button>
 
         <label class="field">
@@ -43,15 +42,9 @@
           <input id="prop" type="text" value="jsonDataStr" spellcheck="false" size="12" />
         </label>
 
-        <label class="field">
-          <span>Every</span>
-          <select id="interval">
-            <option value="250">250 ms</option>
-            <option value="500" selected>500 ms</option>
-            <option value="1000">1 s</option>
-            <option value="2000">2 s</option>
-            <option value="0">Manual</option>
-          </select>
+        <label class="field checkbox" title="Re-read every second. Untick for manual mode: the data is read only when you press Refresh.">
+          <input id="live" type="checkbox" checked />
+          <span>Auto-refresh</span>
         </label>
       </div>
 
@@ -118,7 +111,7 @@
         </label>
 
         <label class="field checkbox">
-          <input id="log-preserve" type="checkbox" />
+          <input id="log-preserve" type="checkbox" checked />
           <span>Preserve on reload</span>
         </label>
 

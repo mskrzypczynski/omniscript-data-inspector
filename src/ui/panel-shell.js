@@ -25,7 +25,8 @@ const HELP = {
       ['Property', 'Any property name, not just jsonDataStr. Point it at a state object or anything else the component exposes.'],
       ['Amber highlight', 'A value that changed since the previous read. A collapsed branch containing a change is marked with a dot.'],
       ['Reveal element', 'Selects the host in the Elements tab and leaves it on $omni, so you can poke at it in the Console.'],
-      ['Every', 'Poll interval, or Manual to read only when you press Refresh. Polling stops while the panel is off screen.'],
+      ['Auto-refresh', 'Re-reads once a second. Untick it for manual mode, where the data is read only when you press Refresh. Polling stops while the panel is off screen. While you have text selected in the tree, updates wait until you release the selection so it can be copied.'],
+      ['Left the page', 'If the OmniScript disappears (for example the page navigated), the last data read stays on screen, marked as stale, until you pick another OmniScript or a new one appears.'],
       ['Tree / Raw', 'Raw shows pretty-printed JSON. If the property is not valid JSON, the raw value is shown with the parse error.']
     ]]]
   },
@@ -58,7 +59,7 @@ const HELP = {
       ['HTTP vs Result', 'The first pill is the transport, the second is the payload. A 200 with ERROR means Apex returned an error inside a successful response — hover for which rule fired.'],
       ['Started / Took', 'Clock time the request left the browser, and the round trip in milliseconds.'],
       ['OmniStudio only', 'Untick to see every Apex call the page makes, not just OmniStudio traffic.'],
-      ['Preserve on reload', 'Keeps the log across page loads. Export writes the visible calls to a JSON file.'],
+      ['Preserve on reload', 'On by default. Keeps the log across page loads; untick to clear it on every reload. Export writes the visible calls to a JSON file.'],
       ['Resizing', 'Drag the divider between the list and the detail pane to rebalance them, side by side or stacked. Double-click it to reset.']
     ]]]
   },
