@@ -93,6 +93,16 @@ function viewSignature() {
     !!Targets.selected()].join('\u0000');
 }
 
+/* Does something other than the user's own Refresh press warrant a read?
+ * With Auto-refresh off the data changes only when asked to, so background
+ * events (the page scan noticing a size change, switching tab, the panel
+ * coming back into view) must not read. The exceptions are a different
+ * script or property, which have nothing to show without a read, and a first
+ * read when there is no payload yet. */
+function shouldRead(reason) {
+  return state.live || state.raw === null || reason === 'selection' || reason === 'props';
+}
+
 function refreshView(before) {
   if (viewSignature() === before) renderStatus(); else render();
 }
@@ -700,7 +710,7 @@ function mount() {
     state.ownersRequested = false;
     if (reason === 'selection') { state.pins = []; state.watchSig = ''; state.watchPrev = {}; }
     if (reason === 'selection' || reason === 'props') resetPayload();
-    if (state.active) { render(); read(); }
+    if (state.active) { render(); if (shouldRead(reason)) read(); }
   });
 }
 
@@ -723,14 +733,14 @@ export const DataTab = {
    * only if the Data tab is the one currently on screen, so rescanning from
    * another tab doesn't also render one that is hidden. */
   refreshIfActive: () => { if (state.active) read(); },
-  show: () => { state.active = true; render(); read(); },
+  show: () => { state.active = true; render(); if (shouldRead('show')) read(); },
   hide: () => { state.active = false; clearTimeout(timer); },
   /* Called from the shell's window.OmniPanel.setVisible, after it has already
    * deduplicated repeated calls with the same value — this only ever applies
    * the new value, exactly like Structure.setVisible. */
   setVisible: (visible) => {
     state.visible = visible;
-    if (visible) { if (state.active) read(); } else { clearTimeout(timer); }
+    if (visible) { if (state.active && shouldRead('visible')) read(); } else { clearTimeout(timer); }
     renderStatus();
   }
 };
