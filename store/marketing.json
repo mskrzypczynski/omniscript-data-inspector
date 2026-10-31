@@ -1,0 +1,58 @@
+[
+  {
+    "file": "marketing-1-data.png",
+    "source": "1-data-tree.png",
+    "headline": "Live OmniScript data",
+    "subline": "A value that changes flashes amber the moment it happens.",
+    "chips": [
+      "Tree, Form, Raw",
+      "Line numbers",
+      "Manual mode"
+    ]
+  },
+  {
+    "file": "marketing-2-structure.png",
+    "source": "2-structure.png",
+    "headline": "Why is it hidden?",
+    "subline": "Every element, its live value and the rule that hides it.",
+    "chips": [
+      "Follow current step",
+      "Readable rules",
+      "Custom labels"
+    ]
+  },
+  {
+    "file": "marketing-3-remote-actions.png",
+    "source": "3-remote-actions.png",
+    "headline": "Catch errors",
+    "subline": "Failed Integration Procedures and Data Mappers flagged, even inside a successful response.",
+    "chips": [
+      "Failed only",
+      "Search inside calls",
+      "Show raw"
+    ]
+  },
+  {
+    "file": "marketing-4-next.png",
+    "source": "4-step-validation.png",
+    "headline": "Why can't I press Next?",
+    "subline": "What may stop Next on this step, judged against the live data.",
+    "chips": [
+      "Required and empty",
+      "Set Errors",
+      "Validation rules"
+    ]
+  },
+  {
+    "file": "marketing-5-devtools.png",
+    "source": "5-dark-structure.png",
+    "darkFrame": true,
+    "headline": "Built for DevTools",
+    "subline": "Keyboard friendly, screen reader friendly, only the storage permission.",
+    "chips": [
+      "No host access",
+      "Runs in your browser",
+      "Free"
+    ]
+  }
+]

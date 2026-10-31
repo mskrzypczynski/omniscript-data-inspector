@@ -1,0 +1,1805 @@
+{
+  "generatedAt": "2025-01-15T10:43:31.000Z",
+  "extensionVersion": null,
+  "masked": true,
+  "advanced": true,
+  "panel": {
+    "width": 1280,
+    "height": 800,
+    "theme": "light"
+  },
+  "settings": {
+    "advanced": true,
+    "mask": true,
+    "dataProp": "jsonDataStr",
+    "dataView": "tree",
+    "dataLive": true,
+    "dataChanges": false,
+    "logPreserve": true,
+    "logOnlyOmni": true,
+    "logErrorsOnly": false,
+    "logSlowMs": 0,
+    "timeFormat": "ms",
+    "structFollow": true,
+    "structAutoCollapse": false,
+    "structHover": false,
+    "structVisibleOnly": false,
+    "defProp": "jsonDef",
+    "tabOrder": "Data, Structure, Remote actions",
+    "showNested": false
+  },
+  "script": {
+    "key": "Account/Onboarding/English",
+    "label": "c-omniscript-account-onboarding",
+    "frame": ""
+  },
+  "step": {
+    "key": "/PlanSelection#12",
+    "name": "PlanSelection",
+    "asIndex": 3,
+    "visits": [
+      {
+        "key": "/PlanSelection#12",
+        "name": "PlanSelection",
+        "from": 1736937811000,
+        "to": null
+      }
+    ]
+  },
+  "payload": {
+    "prop": "jsonDataStr",
+    "value": {
+      "ContextId": "<string>",
+      "timeStamp": "<string>",
+      "DRExtract_Account": {
+        "Account": {
+          "Name": "<string>",
+          "Segment": "<string>",
+          "Status": "<string>"
+        }
+      },
+      "ContactDetails": {
+        "FirstName": "<string>",
+        "LastName": "<string>",
+        "Email": "<string>",
+        "Phone": "<string>",
+        "MarketingOptIn": true
+      },
+      "Address": {
+        "Street": "<string>",
+        "City": "<string>",
+        "Postcode": "<string>",
+        "Country": "<string>"
+      },
+      "PlanSelection": {
+        "Plan": "<string>",
+        "BillingCycle": "<string>",
+        "AddOns": [
+          "<string>",
+          "<string>",
+          "<string>"
+        ],
+        "QuoteTotal": "<number>"
+      },
+      "Review": {
+        "TermsAccepted": false
+      }
+    },
+    "readAt": "2025-01-15T10:43:31.000Z"
+  },
+  "history": [
+    {
+      "time": "2025-01-15T10:43:31.000Z",
+      "bytes": 542,
+      "value": {
+        "ContextId": "<string>",
+        "timeStamp": "<string>",
+        "DRExtract_Account": {
+          "Account": {
+            "Name": "<string>",
+            "Segment": "<string>",
+            "Status": "<string>"
+          }
+        },
+        "ContactDetails": {
+          "FirstName": "<string>",
+          "LastName": "<string>",
+          "Email": "<string>",
+          "Phone": "<string>",
+          "MarketingOptIn": true
+        },
+        "Address": {
+          "Street": "<string>",
+          "City": "<string>",
+          "Postcode": "<string>",
+          "Country": "<string>"
+        },
+        "PlanSelection": {
+          "Plan": "<string>",
+          "BillingCycle": "<string>",
+          "AddOns": [
+            "<string>",
+            "<string>"
+          ]
+        },
+        "Review": {
+          "TermsAccepted": false
+        }
+      }
+    },
+    {
+      "time": "2025-01-15T10:43:31.000Z",
+      "bytes": 578,
+      "step": "PlanSelection",
+      "stepFrom": 1736937811000,
+      "value": {
+        "ContextId": "<string>",
+        "timeStamp": "<string>",
+        "DRExtract_Account": {
+          "Account": {
+            "Name": "<string>",
+            "Segment": "<string>",
+            "Status": "<string>"
+          }
+        },
+        "ContactDetails": {
+          "FirstName": "<string>",
+          "LastName": "<string>",
+          "Email": "<string>",
+          "Phone": "<string>",
+          "MarketingOptIn": true
+        },
+        "Address": {
+          "Street": "<string>",
+          "City": "<string>",
+          "Postcode": "<string>",
+          "Country": "<string>"
+        },
+        "PlanSelection": {
+          "Plan": "<string>",
+          "BillingCycle": "<string>",
+          "AddOns": [
+            "<string>",
+            "<string>",
+            "<string>"
+          ],
+          "QuoteTotal": "<number>"
+        },
+        "Review": {
+          "TermsAccepted": false
+        }
+      }
+    }
+  ],
+  "definition": {
+    "elementCount": 22,
+    "steps": [
+      "ContactDetails",
+      "Address",
+      "PlanSelection",
+      "Review"
+    ],
+    "raw": "{\"bpType\":\"Account\",\"bpSubType\":\"Onboarding\",\"bpLang\":\"English\",\"asIndex\":3,\"children\":[{\"name\":\"DRExtract_Account\",\"type\":\"DataRaptor Extract Action\",\"JSONPath\":\"DRExtract_Account\",\"indexInParent\":0,\"lwcId\":\"lwcDRExtract_Account\",\"bShow\":true,\"propSetMap\":{\"label\":\"Load account\",\"bundle\":\"DRExtract_Account\"}},{\"name\":\"ContactDetails\",\"type\":\"Step\",\"JSONPath\":\"ContactDetails\",\"indexInParent\":1,\"lwcId\":\"lwcContactDetails\",\"bShow\":true,\"propSetMap\":{\"label\":\"Contact Details\"},\"eleArray\":[{\"name\":\"FirstName\",\"type\":\"Text\",\"JSONPath\":\"ContactDetails:FirstName\",\"indexInParent\":0,\"lwcId\":\"lwcFirstName\",\"bShow\":true,\"propSetMap\":{\"label\":\"First name\",\"required\":true}},{\"name\":\"LastName\",\"type\":\"Text\",\"JSONPath\":\"ContactDetails:LastName\",\"indexInParent\":1,\"lwcId\":\"lwcLastName\",\"bShow\":true,\"propSetMap\":{\"label\":\"Last name\",\"required\":true}},{\"name\":\"Email\",\"type\":\"Email\",\"JSONPath\":\"ContactDetails:Email\",\"indexInParent\":2,\"lwcId\":\"lwcEmail\",\"bShow\":true,\"propSetMap\":{\"label\":\"Email address\",\"required\":true}},{\"name\":\"Phone\",\"type\":\"Telephone\",\"JSONPath\":\"ContactDetails:Phone\",\"indexInParent\":3,\"lwcId\":\"lwcPhone\",\"bShow\":true,\"propSetMap\":{\"label\":\"Phone number\"}},{\"name\":\"MarketingOptIn\",\"type\":\"Checkbox\",\"JSONPath\":\"ContactDetails:MarketingOptIn\",\"indexInParent\":4,\"lwcId\":\"lwcMarketingOptIn\",\"bShow\":true,\"propSetMap\":{\"label\":\"Send me product news\"}}]},{\"name\":\"Address\",\"type\":\"Step\",\"JSONPath\":\"Address\",\"indexInParent\":2,\"lwcId\":\"lwcAddress\",\"bShow\":true,\"propSetMap\":{\"label\":\"Address\"},\"eleArray\":[{\"name\":\"Street\",\"type\":\"Text\",\"JSONPath\":\"Address:Street\",\"indexInParent\":0,\"lwcId\":\"lwcStreet\",\"bShow\":true,\"propSetMap\":{\"label\":\"Street\",\"required\":true}},{\"name\":\"City\",\"type\":\"Text\",\"JSONPath\":\"Address:City\",\"indexInParent\":1,\"lwcId\":\"lwcCity\",\"bShow\":true,\"propSetMap\":{\"label\":\"City\",\"required\":true}},{\"name\":\"Postcode\",\"type\":\"Text\",\"JSONPath\":\"Address:Postcode\",\"indexInParent\":2,\"lwcId\":\"lwcPostcode\",\"bShow\":true,\"propSetMap\":{\"label\":\"Postcode\",\"required\":true}},{\"name\":\"Country\",\"type\":\"Select\",\"JSONPath\":\"Address:Country\",\"indexInParent\":3,\"lwcId\":\"lwcCountry\",\"bShow\":true,\"propSetMap\":{\"label\":\"Country\",\"options\":[{\"name\":\"GB\",\"value\":\"United Kingdom\"},{\"name\":\"IE\",\"value\":\"Ireland\"}]}}]},{\"name\":\"PlanSelection\",\"type\":\"Step\",\"JSONPath\":\"PlanSelection\",\"indexInParent\":3,\"lwcId\":\"lwcPlanSelection\",\"bShow\":true,\"propSetMap\":{\"label\":\"Plan Selection\"},\"eleArray\":[{\"name\":\"Plan\",\"type\":\"Radio\",\"JSONPath\":\"PlanSelection:Plan\",\"indexInParent\":0,\"lwcId\":\"lwcPlan\",\"bShow\":true,\"propSetMap\":{\"label\":\"Choose a plan\",\"required\":true,\"options\":[{\"name\":\"Basic\",\"value\":\"Basic\"},{\"name\":\"Standard\",\"value\":\"Standard\"},{\"name\":\"Gold\",\"value\":\"Gold\"}]}},{\"name\":\"BillingCycle\",\"type\":\"Select\",\"JSONPath\":\"PlanSelection:BillingCycle\",\"indexInParent\":1,\"lwcId\":\"lwcBillingCycle\",\"bShow\":true,\"propSetMap\":{\"label\":\"Billing cycle\",\"options\":[{\"name\":\"Monthly\",\"value\":\"Monthly\"},{\"name\":\"Annual\",\"value\":\"Annual\"}]}},{\"name\":\"AddOns\",\"type\":\"Multi-select\",\"JSONPath\":\"PlanSelection:AddOns\",\"indexInParent\":2,\"lwcId\":\"lwcAddOns\",\"bShow\":true,\"propSetMap\":{\"label\":\"Add-ons\",\"options\":[{\"name\":\"Priority support\",\"value\":\"Priority support\"},{\"name\":\"Extra storage\",\"value\":\"Extra storage\"},{\"name\":\"Extended warranty\",\"value\":\"Extended warranty\"}]}},{\"name\":\"PromoCode\",\"type\":\"Text\",\"JSONPath\":\"PlanSelection:PromoCode\",\"indexInParent\":3,\"lwcId\":\"lwcPromoCode\",\"bShow\":false,\"propSetMap\":{\"label\":\"Promo code\",\"show\":{\"group\":{\"operator\":\"AND\",\"rules\":[{\"field\":\"PlanSelection:Plan\",\"condition\":\"=\",\"data\":\"Gold\"}]}}}},{\"name\":\"GoldNote\",\"type\":\"Text Block\",\"JSONPath\":\"PlanSelection:GoldNote\",\"indexInParent\":4,\"lwcId\":\"lwcGoldNote\",\"bShow\":false,\"propSetMap\":{\"text\":\"Gold plans include a named advisor.\",\"show\":{\"group\":{\"operator\":\"AND\",\"rules\":[{\"field\":\"PlanSelection:Plan\",\"condition\":\"=\",\"data\":\"Gold\"}]}}}}]},{\"name\":\"Review\",\"type\":\"Step\",\"JSONPath\":\"Review\",\"indexInParent\":4,\"lwcId\":\"lwcReview\",\"bShow\":true,\"propSetMap\":{\"label\":\"Review\"},\"eleArray\":[{\"name\":\"ReviewNote\",\"type\":\"Text Block\",\"JSONPath\":\"Review:ReviewNote\",\"indexInParent\":0,\"lwcId\":\"lwcReviewNote\",\"bShow\":true,\"propSetMap\":{\"text\":\"Please check your details before you submit.\"}},{\"name\":\"TermsAccepted\",\"type\":\"Checkbox\",\"JSONPath\":\"Review:TermsAccepted\",\"indexInParent\":1,\"lwcId\":\"lwcTermsAccepted\",\"bShow\":true,\"propSetMap\":{\"label\":\"I accept the terms\",\"required\":true}}]},{\"name\":\"Onboarding_SaveApplication\",\"type\":\"Integration Procedure Action\",\"JSONPath\":\"Onboarding_SaveApplication\",\"indexInParent\":5,\"lwcId\":\"lwcOnboarding_SaveApplication\",\"bShow\":true,\"propSetMap\":{\"label\":\"Save application\",\"integrationProcedureKey\":\"Onboarding_SaveApplication\"}}]}"
+  },
+  "calls": [
+    {
+      "time": "2025-01-15T10:42:03.000Z",
+      "action": "DRExtract_Account",
+      "type": "Data mapper / DataRaptor",
+      "signature": "omnistudio.DefaultDROmniScript.invokeInboundDR",
+      "url": "https://example.my.site.com/aura?r=1",
+      "options_flags": [],
+      "requestId": 1,
+      "batchSize": 1,
+      "durationMs": 142,
+      "httpStatus": 200,
+      "state": "SUCCESS",
+      "failed": false,
+      "failure": null,
+      "input": {
+        "ContextId": "<string>"
+      },
+      "options": {
+        "bundle": "<string>",
+        "chainable": false
+      },
+      "output": {
+        "Account": {
+          "Name": "<string>",
+          "Segment": "<string>",
+          "Status": "<string>"
+        },
+        "error": "<string>"
+      },
+      "error": null
+    },
+    {
+      "time": "2025-01-15T10:42:12.000Z",
+      "action": "Onboarding_ValidateAddress",
+      "type": "Integration Procedure",
+      "signature": "omnistudio.IntegrationProcedureService.Onboarding_ValidateAddress",
+      "url": "https://example.my.site.com/aura?r=2",
+      "options_flags": [
+        "chain"
+      ],
+      "requestId": 2,
+      "batchSize": 1,
+      "durationMs": 380,
+      "httpStatus": 200,
+      "state": "SUCCESS",
+      "failed": false,
+      "failure": null,
+      "input": {
+        "Street": "<string>",
+        "City": "<string>",
+        "Postcode": "<string>",
+        "Country": "<string>"
+      },
+      "options": {
+        "chainable": true
+      },
+      "output": {
+        "IPResult": {
+          "Valid": true,
+          "Normalised": "<string>"
+        },
+        "error": "<string>"
+      },
+      "error": null
+    },
+    {
+      "time": "2025-01-15T10:42:21.000Z",
+      "action": "Onboarding_GetPlans",
+      "type": "Integration Procedure",
+      "signature": "omnistudio.IntegrationProcedureService.Onboarding_GetPlans",
+      "url": "https://example.my.site.com/aura?r=3",
+      "options_flags": [
+        "cache✕"
+      ],
+      "requestId": 3,
+      "batchSize": 1,
+      "durationMs": 215,
+      "httpStatus": 200,
+      "state": "SUCCESS",
+      "failed": false,
+      "failure": null,
+      "input": {
+        "Country": "<string>",
+        "Segment": "<string>"
+      },
+      "options": {
+        "ignoreCache": true
+      },
+      "output": {
+        "IPResult": {
+          "Plans": [
+            {
+              "Id": "<string>",
+              "Price": "<number>"
+            },
+            {
+              "Id": "<string>",
+              "Price": "<number>"
+            },
+            {
+              "Id": "<string>",
+              "Price": "<number>"
+            }
+          ]
+        },
+        "error": "<string>"
+      },
+      "error": null
+    },
+    {
+      "time": "2025-01-15T10:42:34.000Z",
+      "action": "DRExtract_Account",
+      "type": "Data mapper / DataRaptor",
+      "signature": "omnistudio.DefaultDROmniScript.invokeInboundDR",
+      "url": "https://example.my.site.com/aura?r=4",
+      "options_flags": [],
+      "requestId": 4,
+      "batchSize": 1,
+      "durationMs": 118,
+      "httpStatus": 200,
+      "state": "SUCCESS",
+      "failed": false,
+      "failure": null,
+      "input": {
+        "ContextId": "<string>",
+        "Refresh": true
+      },
+      "options": {
+        "bundle": "<string>"
+      },
+      "output": {
+        "Account": {
+          "Name": "<string>",
+          "Segment": "<string>",
+          "Status": "<string>"
+        },
+        "error": "<string>"
+      },
+      "error": null
+    },
+    {
+      "time": "2025-01-15T10:42:47.000Z",
+      "action": "Onboarding_SaveApplication",
+      "type": "Integration Procedure",
+      "signature": "omnistudio.IntegrationProcedureService.Onboarding_SaveApplication",
+      "url": "https://example.my.site.com/aura?r=5",
+      "options_flags": [],
+      "requestId": 5,
+      "batchSize": 1,
+      "durationMs": 1240,
+      "httpStatus": 200,
+      "state": "SUCCESS",
+      "failed": true,
+      "failure": "IPResult indicates failure — <string>",
+      "input": {
+        "ContactDetails": {
+          "FirstName": "<string>",
+          "LastName": "<string>",
+          "Email": "<string>",
+          "Phone": "<string>"
+        },
+        "Address": {
+          "Street": "<string>",
+          "City": "<string>",
+          "Postcode": "<string>",
+          "Country": "<string>"
+        },
+        "PlanSelection": {
+          "Plan": "<string>",
+          "BillingCycle": "<string>",
+          "AddOns": [
+            "<string>",
+            "<string>"
+          ]
+        },
+        "Review": {
+          "TermsAccepted": false
+        }
+      },
+      "options": {
+        "queueableChainable": false
+      },
+      "output": {
+        "IPResult": {
+          "success": false,
+          "Step": "<string>",
+          "error": "<string>"
+        }
+      },
+      "error": null
+    }
+  ],
+  "tabs": {
+    "data": {
+      "prop": "jsonDataStr",
+      "view": "tree",
+      "filter": "",
+      "live": true,
+      "stale": false,
+      "trackChanges": false,
+      "rawLength": 578,
+      "expandedCount": 8,
+      "pins": [],
+      "changedCount": 4,
+      "touchedCount": 0,
+      "sizesTop": [
+        {
+          "path": "PlanSelection",
+          "size": 126,
+          "percent": 21.8
+        },
+        {
+          "path": "ContactDetails",
+          "size": 125,
+          "percent": 21.6
+        },
+        {
+          "path": "Address",
+          "size": 84,
+          "percent": 14.5
+        },
+        {
+          "path": "DRExtract_Account",
+          "size": 76,
+          "percent": 13.1
+        },
+        {
+          "path": "DRExtract_Account.Account",
+          "size": 64,
+          "percent": 11.1
+        },
+        {
+          "path": "PlanSelection.AddOns",
+          "size": 56,
+          "percent": 9.7
+        },
+        {
+          "path": "timeStamp",
+          "size": 26,
+          "percent": 4.5
+        },
+        {
+          "path": "ContactDetails.Email",
+          "size": 26,
+          "percent": 4.5
+        },
+        {
+          "path": "Review",
+          "size": 23,
+          "percent": 4
+        },
+        {
+          "path": "PlanSelection.AddOns.2",
+          "size": 19,
+          "percent": 3.3
+        },
+        {
+          "path": "ContactDetails.Phone",
+          "size": 18,
+          "percent": 3.1
+        },
+        {
+          "path": "PlanSelection.AddOns.0",
+          "size": 18,
+          "percent": 3.1
+        },
+        {
+          "path": "Address.Street",
+          "size": 17,
+          "percent": 2.9
+        },
+        {
+          "path": "PlanSelection.AddOns.1",
+          "size": 15,
+          "percent": 2.6
+        },
+        {
+          "path": "ContextId",
+          "size": 14,
+          "percent": 2.4
+        },
+        {
+          "path": "DRExtract_Account.Account.Name",
+          "size": 14,
+          "percent": 2.4
+        },
+        {
+          "path": "Address.City",
+          "size": 12,
+          "percent": 2.1
+        },
+        {
+          "path": "DRExtract_Account.Account.Segment",
+          "size": 10,
+          "percent": 1.7
+        },
+        {
+          "path": "DRExtract_Account.Account.Status",
+          "size": 10,
+          "percent": 1.7
+        },
+        {
+          "path": "PlanSelection.Plan",
+          "size": 10,
+          "percent": 1.7
+        }
+      ]
+    },
+    "actions": {
+      "recording": true,
+      "preserve": true,
+      "filters": {
+        "onlyOmni": true,
+        "errorsOnly": false,
+        "slowMs": 0,
+        "text": ""
+      },
+      "selectedId": null,
+      "compareId": null,
+      "marked": [],
+      "entries": [
+        {
+          "id": 1,
+          "time": "2025-01-15T10:42:03.000Z",
+          "action": "DRExtract_Account",
+          "type": "Data mapper / DataRaptor",
+          "signature": "omnistudio.DefaultDROmniScript.invokeInboundDR",
+          "url": "https://example.my.site.com/aura?r=1",
+          "options_flags": [],
+          "requestId": 1,
+          "batchSize": 1,
+          "durationMs": 142,
+          "httpStatus": 200,
+          "state": "SUCCESS",
+          "failed": false,
+          "failure": null,
+          "input": {
+            "ContextId": "<string>"
+          },
+          "options": {
+            "bundle": "<string>",
+            "chainable": false
+          },
+          "output": {
+            "Account": {
+              "Name": "<string>",
+              "Segment": "<string>",
+              "Status": "<string>"
+            },
+            "error": "<string>"
+          },
+          "error": null
+        },
+        {
+          "id": 2,
+          "time": "2025-01-15T10:42:12.000Z",
+          "action": "Onboarding_ValidateAddress",
+          "type": "Integration Procedure",
+          "signature": "omnistudio.IntegrationProcedureService.Onboarding_ValidateAddress",
+          "url": "https://example.my.site.com/aura?r=2",
+          "options_flags": [
+            "chain"
+          ],
+          "requestId": 2,
+          "batchSize": 1,
+          "durationMs": 380,
+          "httpStatus": 200,
+          "state": "SUCCESS",
+          "failed": false,
+          "failure": null,
+          "input": {
+            "Street": "<string>",
+            "City": "<string>",
+            "Postcode": "<string>",
+            "Country": "<string>"
+          },
+          "options": {
+            "chainable": true
+          },
+          "output": {
+            "IPResult": {
+              "Valid": true,
+              "Normalised": "<string>"
+            },
+            "error": "<string>"
+          },
+          "error": null
+        },
+        {
+          "id": 3,
+          "time": "2025-01-15T10:42:21.000Z",
+          "action": "Onboarding_GetPlans",
+          "type": "Integration Procedure",
+          "signature": "omnistudio.IntegrationProcedureService.Onboarding_GetPlans",
+          "url": "https://example.my.site.com/aura?r=3",
+          "options_flags": [
+            "cache✕"
+          ],
+          "requestId": 3,
+          "batchSize": 1,
+          "durationMs": 215,
+          "httpStatus": 200,
+          "state": "SUCCESS",
+          "failed": false,
+          "failure": null,
+          "input": {
+            "Country": "<string>",
+            "Segment": "<string>"
+          },
+          "options": {
+            "ignoreCache": true
+          },
+          "output": {
+            "IPResult": {
+              "Plans": [
+                {
+                  "Id": "<string>",
+                  "Price": "<number>"
+                },
+                {
+                  "Id": "<string>",
+                  "Price": "<number>"
+                },
+                {
+                  "Id": "<string>",
+                  "Price": "<number>"
+                }
+              ]
+            },
+            "error": "<string>"
+          },
+          "error": null
+        },
+        {
+          "id": 4,
+          "time": "2025-01-15T10:42:34.000Z",
+          "action": "DRExtract_Account",
+          "type": "Data mapper / DataRaptor",
+          "signature": "omnistudio.DefaultDROmniScript.invokeInboundDR",
+          "url": "https://example.my.site.com/aura?r=4",
+          "options_flags": [],
+          "requestId": 4,
+          "batchSize": 1,
+          "durationMs": 118,
+          "httpStatus": 200,
+          "state": "SUCCESS",
+          "failed": false,
+          "failure": null,
+          "input": {
+            "ContextId": "<string>",
+            "Refresh": true
+          },
+          "options": {
+            "bundle": "<string>"
+          },
+          "output": {
+            "Account": {
+              "Name": "<string>",
+              "Segment": "<string>",
+              "Status": "<string>"
+            },
+            "error": "<string>"
+          },
+          "error": null
+        },
+        {
+          "id": 5,
+          "time": "2025-01-15T10:42:47.000Z",
+          "action": "Onboarding_SaveApplication",
+          "type": "Integration Procedure",
+          "signature": "omnistudio.IntegrationProcedureService.Onboarding_SaveApplication",
+          "url": "https://example.my.site.com/aura?r=5",
+          "options_flags": [],
+          "requestId": 5,
+          "batchSize": 1,
+          "durationMs": 1240,
+          "httpStatus": 200,
+          "state": "SUCCESS",
+          "failed": true,
+          "failure": "IPResult indicates failure — <string>",
+          "input": {
+            "ContactDetails": {
+              "FirstName": "<string>",
+              "LastName": "<string>",
+              "Email": "<string>",
+              "Phone": "<string>"
+            },
+            "Address": {
+              "Street": "<string>",
+              "City": "<string>",
+              "Postcode": "<string>",
+              "Country": "<string>"
+            },
+            "PlanSelection": {
+              "Plan": "<string>",
+              "BillingCycle": "<string>",
+              "AddOns": [
+                "<string>",
+                "<string>"
+              ]
+            },
+            "Review": {
+              "TermsAccepted": false
+            }
+          },
+          "options": {
+            "queueableChainable": false
+          },
+          "output": {
+            "IPResult": {
+              "success": false,
+              "Step": "<string>",
+              "error": "<string>"
+            }
+          },
+          "error": null
+        }
+      ],
+      "problems": [
+        {
+          "id": 1,
+          "responseProblem": null,
+          "failure": null
+        },
+        {
+          "id": 2,
+          "responseProblem": null,
+          "failure": null
+        },
+        {
+          "id": 3,
+          "responseProblem": null,
+          "failure": null
+        },
+        {
+          "id": 4,
+          "responseProblem": null,
+          "failure": null
+        },
+        {
+          "id": 5,
+          "responseProblem": null,
+          "failure": "IPResult indicates failure — <string>"
+        }
+      ]
+    },
+    "structure": {
+      "defProp": "jsonDef",
+      "selectedKey": "/PlanSelection#12",
+      "activeIndex": 3,
+      "elementCount": 22,
+      "problems": [],
+      "blockers": [],
+      "elements": [
+        {
+          "key": "/DRExtract_Account#0",
+          "parentKey": "",
+          "hasChildren": false,
+          "name": "DRExtract_Account",
+          "type": "DataRaptor Extract Action",
+          "label": "Load account",
+          "labelKey": "Load account",
+          "lwcId": "lwcDRExtract_Account",
+          "searchText": "drextract_account dataraptor extract action load account load account load account",
+          "missingLabels": [],
+          "jsonPath": "DRExtract_Account",
+          "depth": 0,
+          "indexInParent": 0,
+          "shown": true,
+          "category": {
+            "key": "action",
+            "glyph": "⚡",
+            "label": "Action",
+            "test": {}
+          },
+          "required": false,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "DRExtract_Account",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": {
+            "Account": {
+              "Name": "<string>",
+              "Segment": "<string>",
+              "Status": "<string>"
+            }
+          }
+        },
+        {
+          "key": "/ContactDetails#1",
+          "parentKey": "",
+          "hasChildren": true,
+          "name": "ContactDetails",
+          "type": "Step",
+          "label": "Contact Details",
+          "labelKey": "Contact Details",
+          "lwcId": "lwcContactDetails",
+          "searchText": "contactdetails step contact details contact details contact details",
+          "missingLabels": [],
+          "jsonPath": "ContactDetails",
+          "depth": 0,
+          "indexInParent": 1,
+          "shown": true,
+          "category": {
+            "key": "step",
+            "glyph": "▤",
+            "label": "Step",
+            "test": {}
+          },
+          "required": false,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": {
+            "FirstName": "<string>",
+            "LastName": "<string>",
+            "Email": "<string>",
+            "Phone": "<string>",
+            "MarketingOptIn": true
+          }
+        },
+        {
+          "key": "/ContactDetails#1/FirstName#2",
+          "parentKey": "/ContactDetails#1",
+          "hasChildren": false,
+          "name": "FirstName",
+          "type": "Text",
+          "label": "First name",
+          "labelKey": "First name",
+          "lwcId": "lwcFirstName",
+          "searchText": "firstname text first name first name first name",
+          "missingLabels": [],
+          "jsonPath": "ContactDetails:FirstName",
+          "depth": 1,
+          "indexInParent": 0,
+          "shown": true,
+          "category": {
+            "key": "input",
+            "glyph": "✎",
+            "label": "Input",
+            "test": {}
+          },
+          "required": true,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": "<string>"
+        },
+        {
+          "key": "/ContactDetails#1/LastName#3",
+          "parentKey": "/ContactDetails#1",
+          "hasChildren": false,
+          "name": "LastName",
+          "type": "Text",
+          "label": "Last name",
+          "labelKey": "Last name",
+          "lwcId": "lwcLastName",
+          "searchText": "lastname text last name last name last name",
+          "missingLabels": [],
+          "jsonPath": "ContactDetails:LastName",
+          "depth": 1,
+          "indexInParent": 1,
+          "shown": true,
+          "category": {
+            "key": "input",
+            "glyph": "✎",
+            "label": "Input",
+            "test": {}
+          },
+          "required": true,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": "<string>"
+        },
+        {
+          "key": "/ContactDetails#1/Email#4",
+          "parentKey": "/ContactDetails#1",
+          "hasChildren": false,
+          "name": "Email",
+          "type": "Email",
+          "label": "Email address",
+          "labelKey": "Email address",
+          "lwcId": "lwcEmail",
+          "searchText": "email email email address email address email address",
+          "missingLabels": [],
+          "jsonPath": "ContactDetails:Email",
+          "depth": 1,
+          "indexInParent": 2,
+          "shown": true,
+          "category": {
+            "key": "input",
+            "glyph": "✎",
+            "label": "Input",
+            "test": {}
+          },
+          "required": true,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": "<string>"
+        },
+        {
+          "key": "/ContactDetails#1/Phone#5",
+          "parentKey": "/ContactDetails#1",
+          "hasChildren": false,
+          "name": "Phone",
+          "type": "Telephone",
+          "label": "Phone number",
+          "labelKey": "Phone number",
+          "lwcId": "lwcPhone",
+          "searchText": "phone telephone phone number phone number phone number",
+          "missingLabels": [],
+          "jsonPath": "ContactDetails:Phone",
+          "depth": 1,
+          "indexInParent": 3,
+          "shown": true,
+          "category": {
+            "key": "input",
+            "glyph": "✎",
+            "label": "Input",
+            "test": {}
+          },
+          "required": false,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": "<string>"
+        },
+        {
+          "key": "/ContactDetails#1/MarketingOptIn#6",
+          "parentKey": "/ContactDetails#1",
+          "hasChildren": false,
+          "name": "MarketingOptIn",
+          "type": "Checkbox",
+          "label": "Send me product news",
+          "labelKey": "Send me product news",
+          "lwcId": "lwcMarketingOptIn",
+          "searchText": "marketingoptin checkbox send me product news send me product news send me product news",
+          "missingLabels": [],
+          "jsonPath": "ContactDetails:MarketingOptIn",
+          "depth": 1,
+          "indexInParent": 4,
+          "shown": true,
+          "category": {
+            "key": "choice",
+            "glyph": "☑",
+            "label": "Choice",
+            "test": {}
+          },
+          "required": false,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": true
+        },
+        {
+          "key": "/Address#7",
+          "parentKey": "",
+          "hasChildren": true,
+          "name": "Address",
+          "type": "Step",
+          "label": "Address",
+          "labelKey": "Address",
+          "lwcId": "lwcAddress",
+          "searchText": "address step address address address",
+          "missingLabels": [],
+          "jsonPath": "Address",
+          "depth": 0,
+          "indexInParent": 2,
+          "shown": true,
+          "category": {
+            "key": "step",
+            "glyph": "▤",
+            "label": "Step",
+            "test": {}
+          },
+          "required": false,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": {
+            "Street": "<string>",
+            "City": "<string>",
+            "Postcode": "<string>",
+            "Country": "<string>"
+          }
+        },
+        {
+          "key": "/Address#7/Street#8",
+          "parentKey": "/Address#7",
+          "hasChildren": false,
+          "name": "Street",
+          "type": "Text",
+          "label": "Street",
+          "labelKey": "Street",
+          "lwcId": "lwcStreet",
+          "searchText": "street text street street street",
+          "missingLabels": [],
+          "jsonPath": "Address:Street",
+          "depth": 1,
+          "indexInParent": 0,
+          "shown": true,
+          "category": {
+            "key": "input",
+            "glyph": "✎",
+            "label": "Input",
+            "test": {}
+          },
+          "required": true,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": "<string>"
+        },
+        {
+          "key": "/Address#7/City#9",
+          "parentKey": "/Address#7",
+          "hasChildren": false,
+          "name": "City",
+          "type": "Text",
+          "label": "City",
+          "labelKey": "City",
+          "lwcId": "lwcCity",
+          "searchText": "city text city city city",
+          "missingLabels": [],
+          "jsonPath": "Address:City",
+          "depth": 1,
+          "indexInParent": 1,
+          "shown": true,
+          "category": {
+            "key": "input",
+            "glyph": "✎",
+            "label": "Input",
+            "test": {}
+          },
+          "required": true,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": "<string>"
+        },
+        {
+          "key": "/Address#7/Postcode#10",
+          "parentKey": "/Address#7",
+          "hasChildren": false,
+          "name": "Postcode",
+          "type": "Text",
+          "label": "Postcode",
+          "labelKey": "Postcode",
+          "lwcId": "lwcPostcode",
+          "searchText": "postcode text postcode postcode postcode",
+          "missingLabels": [],
+          "jsonPath": "Address:Postcode",
+          "depth": 1,
+          "indexInParent": 2,
+          "shown": true,
+          "category": {
+            "key": "input",
+            "glyph": "✎",
+            "label": "Input",
+            "test": {}
+          },
+          "required": true,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": "<string>"
+        },
+        {
+          "key": "/Address#7/Country#11",
+          "parentKey": "/Address#7",
+          "hasChildren": false,
+          "name": "Country",
+          "type": "Select",
+          "label": "Country",
+          "labelKey": "Country",
+          "lwcId": "lwcCountry",
+          "searchText": "country select country country country united kingdom ireland",
+          "missingLabels": [],
+          "jsonPath": "Address:Country",
+          "depth": 1,
+          "indexInParent": 3,
+          "shown": true,
+          "category": {
+            "key": "choice",
+            "glyph": "☑",
+            "label": "Choice",
+            "test": {}
+          },
+          "required": false,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": {
+            "GB": "United Kingdom",
+            "IE": "Ireland"
+          },
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": "<string>"
+        },
+        {
+          "key": "/PlanSelection#12",
+          "parentKey": "",
+          "hasChildren": true,
+          "name": "PlanSelection",
+          "type": "Step",
+          "label": "Plan Selection",
+          "labelKey": "Plan Selection",
+          "lwcId": "lwcPlanSelection",
+          "searchText": "planselection step plan selection plan selection plan selection",
+          "missingLabels": [],
+          "jsonPath": "PlanSelection",
+          "depth": 0,
+          "indexInParent": 3,
+          "shown": true,
+          "category": {
+            "key": "step",
+            "glyph": "▤",
+            "label": "Step",
+            "test": {}
+          },
+          "required": false,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": {
+            "Plan": "<string>",
+            "BillingCycle": "<string>",
+            "AddOns": [
+              "<string>",
+              "<string>"
+            ]
+          }
+        },
+        {
+          "key": "/PlanSelection#12/Plan#13",
+          "parentKey": "/PlanSelection#12",
+          "hasChildren": false,
+          "name": "Plan",
+          "type": "Radio",
+          "label": "Choose a plan",
+          "labelKey": "Choose a plan",
+          "lwcId": "lwcPlan",
+          "searchText": "plan radio choose a plan choose a plan choose a plan basic standard gold",
+          "missingLabels": [],
+          "jsonPath": "PlanSelection:Plan",
+          "depth": 1,
+          "indexInParent": 0,
+          "shown": true,
+          "category": {
+            "key": "choice",
+            "glyph": "☑",
+            "label": "Choice",
+            "test": {}
+          },
+          "required": true,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": {
+            "Basic": "Basic",
+            "Standard": "Standard",
+            "Gold": "Gold"
+          },
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": "<string>"
+        },
+        {
+          "key": "/PlanSelection#12/BillingCycle#14",
+          "parentKey": "/PlanSelection#12",
+          "hasChildren": false,
+          "name": "BillingCycle",
+          "type": "Select",
+          "label": "Billing cycle",
+          "labelKey": "Billing cycle",
+          "lwcId": "lwcBillingCycle",
+          "searchText": "billingcycle select billing cycle billing cycle billing cycle monthly annual",
+          "missingLabels": [],
+          "jsonPath": "PlanSelection:BillingCycle",
+          "depth": 1,
+          "indexInParent": 1,
+          "shown": true,
+          "category": {
+            "key": "choice",
+            "glyph": "☑",
+            "label": "Choice",
+            "test": {}
+          },
+          "required": false,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": {
+            "Monthly": "Monthly",
+            "Annual": "Annual"
+          },
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": "<string>"
+        },
+        {
+          "key": "/PlanSelection#12/AddOns#15",
+          "parentKey": "/PlanSelection#12",
+          "hasChildren": false,
+          "name": "AddOns",
+          "type": "Multi-select",
+          "label": "Add-ons",
+          "labelKey": "Add-ons",
+          "lwcId": "lwcAddOns",
+          "searchText": "addons multi-select add-ons add-ons add-ons priority support extra storage extended warranty",
+          "missingLabels": [],
+          "jsonPath": "PlanSelection:AddOns",
+          "depth": 1,
+          "indexInParent": 2,
+          "shown": true,
+          "category": {
+            "key": "choice",
+            "glyph": "☑",
+            "label": "Choice",
+            "test": {}
+          },
+          "required": false,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": {
+            "Priority support": "Priority support",
+            "Extra storage": "Extra storage",
+            "Extended warranty": "Extended warranty"
+          },
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": [
+            "<string>",
+            "<string>"
+          ]
+        },
+        {
+          "key": "/PlanSelection#12/PromoCode#16",
+          "parentKey": "/PlanSelection#12",
+          "hasChildren": false,
+          "name": "PromoCode",
+          "type": "Text",
+          "label": "Promo code",
+          "labelKey": "Promo code",
+          "lwcId": "lwcPromoCode",
+          "searchText": "promocode text promo code promo code promo code",
+          "missingLabels": [],
+          "jsonPath": "PlanSelection:PromoCode",
+          "depth": 1,
+          "indexInParent": 3,
+          "shown": false,
+          "category": {
+            "key": "input",
+            "glyph": "✎",
+            "label": "Input",
+            "test": {}
+          },
+          "required": false,
+          "conditional": true,
+          "show": {
+            "group": {
+              "operator": "AND",
+              "rules": [
+                {
+                  "field": "PlanSelection:Plan",
+                  "condition": "=",
+                  "data": "Gold"
+                }
+              ]
+            }
+          },
+          "showExpr": "PlanSelection:Plan = \"Gold\"",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          }
+        },
+        {
+          "key": "/PlanSelection#12/GoldNote#17",
+          "parentKey": "/PlanSelection#12",
+          "hasChildren": false,
+          "name": "GoldNote",
+          "type": "Text Block",
+          "label": "Gold plans include a named advisor.",
+          "labelKey": "",
+          "lwcId": "lwcGoldNote",
+          "searchText": "goldnote text block gold plans include a named advisor.",
+          "missingLabels": [],
+          "jsonPath": "PlanSelection:GoldNote",
+          "depth": 1,
+          "indexInParent": 4,
+          "shown": false,
+          "category": {
+            "key": "display",
+            "glyph": "¶",
+            "label": "Display",
+            "test": {}
+          },
+          "required": false,
+          "conditional": true,
+          "show": {
+            "group": {
+              "operator": "AND",
+              "rules": [
+                {
+                  "field": "PlanSelection:Plan",
+                  "condition": "=",
+                  "data": "Gold"
+                }
+              ]
+            }
+          },
+          "showExpr": "PlanSelection:Plan = \"Gold\"",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          }
+        },
+        {
+          "key": "/Review#18",
+          "parentKey": "",
+          "hasChildren": true,
+          "name": "Review",
+          "type": "Step",
+          "label": "Review",
+          "labelKey": "Review",
+          "lwcId": "lwcReview",
+          "searchText": "review step review review review",
+          "missingLabels": [],
+          "jsonPath": "Review",
+          "depth": 0,
+          "indexInParent": 4,
+          "shown": true,
+          "category": {
+            "key": "step",
+            "glyph": "▤",
+            "label": "Step",
+            "test": {}
+          },
+          "required": false,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": {
+            "TermsAccepted": false
+          }
+        },
+        {
+          "key": "/Review#18/ReviewNote#19",
+          "parentKey": "/Review#18",
+          "hasChildren": false,
+          "name": "ReviewNote",
+          "type": "Text Block",
+          "label": "Please check your details before you submit.",
+          "labelKey": "",
+          "lwcId": "lwcReviewNote",
+          "searchText": "reviewnote text block please check your details before you submit.",
+          "missingLabels": [],
+          "jsonPath": "Review:ReviewNote",
+          "depth": 1,
+          "indexInParent": 0,
+          "shown": true,
+          "category": {
+            "key": "display",
+            "glyph": "¶",
+            "label": "Display",
+            "test": {}
+          },
+          "required": false,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          }
+        },
+        {
+          "key": "/Review#18/TermsAccepted#20",
+          "parentKey": "/Review#18",
+          "hasChildren": false,
+          "name": "TermsAccepted",
+          "type": "Checkbox",
+          "label": "I accept the terms",
+          "labelKey": "I accept the terms",
+          "lwcId": "lwcTermsAccepted",
+          "searchText": "termsaccepted checkbox i accept the terms i accept the terms i accept the terms",
+          "missingLabels": [],
+          "jsonPath": "Review:TermsAccepted",
+          "depth": 1,
+          "indexInParent": 1,
+          "shown": true,
+          "category": {
+            "key": "choice",
+            "glyph": "☑",
+            "label": "Choice",
+            "test": {}
+          },
+          "required": true,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          },
+          "value": false
+        },
+        {
+          "key": "/Onboarding_SaveApplication#21",
+          "parentKey": "",
+          "hasChildren": false,
+          "name": "Onboarding_SaveApplication",
+          "type": "Integration Procedure Action",
+          "label": "Save application",
+          "labelKey": "Save application",
+          "lwcId": "lwcOnboarding_SaveApplication",
+          "searchText": "onboarding_saveapplication integration procedure action save application save application save application",
+          "missingLabels": [],
+          "jsonPath": "Onboarding_SaveApplication",
+          "depth": 0,
+          "indexInParent": 5,
+          "shown": true,
+          "category": {
+            "key": "action",
+            "glyph": "⚡",
+            "label": "Action",
+            "test": {}
+          },
+          "required": false,
+          "conditional": false,
+          "show": null,
+          "showExpr": "",
+          "remote": "Onboarding_SaveApplication",
+          "isSetValues": false,
+          "setValues": null,
+          "optionLabels": null,
+          "validation": {
+            "kind": "",
+            "errorMap": [],
+            "runsOn": "",
+            "triggerExpr": "",
+            "validateExpr": "",
+            "message": "",
+            "messages": [],
+            "has": false
+          }
+        }
+      ],
+      "visibility": {
+        "/DRExtract_Account#0": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/ContactDetails#1": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/ContactDetails#1/FirstName#2": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/ContactDetails#1/LastName#3": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/ContactDetails#1/Email#4": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/ContactDetails#1/Phone#5": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/ContactDetails#1/MarketingOptIn#6": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/Address#7": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/Address#7/Street#8": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/Address#7/City#9": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/Address#7/Postcode#10": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/Address#7/Country#11": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/PlanSelection#12": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/PlanSelection#12/Plan#13": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/PlanSelection#12/BillingCycle#14": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/PlanSelection#12/AddOns#15": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/PlanSelection#12/PromoCode#16": {
+          "hidden": true,
+          "headline": "<string>"
+        },
+        "/PlanSelection#12/GoldNote#17": {
+          "hidden": true,
+          "headline": "<string>"
+        },
+        "/Review#18": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/Review#18/ReviewNote#19": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/Review#18/TermsAccepted#20": {
+          "hidden": false,
+          "headline": ""
+        },
+        "/Onboarding_SaveApplication#21": {
+          "hidden": false,
+          "headline": ""
+        }
+      },
+      "progress": {
+        "/DRExtract_Account#0": "done",
+        "/ContactDetails#1": "done",
+        "/Address#7": "done",
+        "/PlanSelection#12": "current",
+        "/Review#18": "pending",
+        "/Onboarding_SaveApplication#21": "pending"
+      },
+      "filter": "",
+      "collapsedCount": 0
+    }
+  }
+}

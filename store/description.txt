@@ -1,0 +1,73 @@
+🔍 See what your OmniScript is really doing
+
+Inspect the live data, structure and Data Mapper, Integration Procedure and Remote Action calls of any Salesforce OmniStudio or Vlocity OmniScript, straight from DevTools.
+
+OmniScript Data Inspector adds a DevTools tab that shows the data an OmniScript is holding right now — parsed, formatted, and updating while you click through the script. Instead of typing querySelector into the console after every step, you keep the panel open and watch the JSON change.
+
+An independent, unofficial developer tool. Not affiliated with, endorsed by, or sponsored by Salesforce, Inc.
+
+LIVE DATA
+
+✨ A value that changes flashes amber, so you catch a field updating the moment it happens, and a collapsed branch that holds a change is marked with a dot.
+🌳 The data as a collapsible tree, a form, or Raw text. The tree keeps your expanded nodes open across updates; the form lists each key under the label of the element that owns it. Alt+click (or the row button) opens or closes a whole branch at once, and line numbers match the Raw view.
+🔎 Filter keys and values without losing control: branches still expand and collapse while you search. The box also takes an OmniScript path (Step:Rows|2:Field) or key=value.
+🖱️ Right-click a row to open the record behind an Id, or to copy the value, the path or the %merge% field. Copy JSON and Save file keep the page's exact text, key order and long numbers included.
+⏸️ Untick Auto-refresh for a true manual mode: nothing is re-read until you press Refresh.
+🎯 Reads any property you name. jsonDataStr is the default; point it at a state object or anything else the component exposes (in Settings, under Data, in Reading another page).
+📍 Inspect element selects the OmniScript in the Elements tab and leaves it on $omni for the console.
+
+SCRIPT STRUCTURE
+
+A second tab lists every element the OmniScript is built from, read from its definition and joined to the live data.
+
+🔢 Select an element and its current value comes first, on a card of its own, updating as the script is filled in; a step's value reads like the page's form.
+👣 Follow current step keeps the step the script is on selected as you move through it; passed and current steps are marked.
+🙈 Hidden elements are dimmed, and the panel says in plain words which rule hides them and what the field holds right now.
+🚩 Markers for required fields, show/hide rules — with the rule shown as a readable expression — Set Values, Set Errors, validation, and elements that call something. Multi-language scripts show resolved custom labels and flag missing ones.
+🚧 Stuck on a step? The Valid column marks what would stop Next now, and the current step's Validation tab lists required fields still empty in every row of a repeat block, every validation and Set Errors of the step with its verdict (the failing ones open), and the step's custom components, judged against the live data.
+🔎 Show rules and validations as cards, one row per condition (met or not, must be, is now) with the condition in plain words, a Properties tab that explains each setting of an element, Set Values resolved against the live data, formulas worked out where the panel can, and a summary of the whole script when nothing is selected.
+📞 The calls each element makes, with what it sends and where the answer lands, one click from the element.
+✏️ Editing in the Designer? The element list picks up a changed definition by itself, keeping your selection.
+
+CALL LOG
+
+A third tab, Calls, records the OmniStudio calls the page makes while you work, across the Aura, Lightning Web Runtime and Visualforce remoting transports.
+
+🏷️ Names Data Mappers and Integration Procedures by their name or key, not the integration class they all share. Works with standard OmniStudio and the Vlocity managed packages. A chainable procedure that ran as several calls is one row with its calls, and repeated calls are tagged.
+🧩 Splits batched calls, so each action gets its own row instead of hiding inside a shared request.
+❗ Flags errors returned inside a successful response — the ones the Network tab shows as a plain 200 — with the full message one click away. Calls with no response, a session that expired or an Aura system error are flagged instead of showing as Succeeded.
+🧮 Filter to failed calls, and search inside a call's input, options and output (in:), by step (step:), URL (url:) or repeats (repeat:).
+📋 Copy a call's input as JSON, and Show raw for the request exactly as the page sent it and the answer as it came back.
+🔴 The tab badge counts the calls in view and turns red with the number of failed ones, so you notice a failure from any tab.
+💾 Preserves the log across reloads and exports the calls to JSON.
+
+LINKED TOGETHER
+
+🔗 Jump from a value in Data to its element in Structure and back, see the calls each element makes, and open the selected script in the OmniStudio Builder or the OmniScript Designer with one click.
+🕶️ Mask values replaces strings and numbers with placeholders in everything you copy, save or export — handy before pasting into a ticket.
+🧰 Copy report puts a few lines for a ticket on the clipboard. Settings sit behind a gear: text size, Mask values at start, Remember my settings (on by default), the refresh rate and the Calls options.
+⌨️ Keyboard friendly: arrow keys or j/k in the lists, 1–3 for the tabs (drag them into the order you like), / to filter, Ctrl+\ to hide the list, ? for searchable help and all shortcuts, and a short tour the first time. Light and dark, from 340 px up. Works with screen readers.
+
+HOW TO USE IT
+
+1. Open the page containing the OmniScript.
+2. Open DevTools and select the {=} OmniScript tab.
+3. Interact with the script — the tree updates as the data changes.
+
+If the OmniScript renders inside an iframe, including the OmniScript Designer preview, it is found automatically. Closed shadow roots and cross-origin frames cannot be read; that is a browser restriction rather than a limit of the panel.
+
+Want to record the steps you keep repeating and replay them? That is OmniScript Replay, a separate extension from the same author.
+
+PRIVACY
+
+🔒 Runs entirely in your browser, and your org data stays with you. It asks for only the storage permission, and for no host access.
+
+The extension reads the page you are already inspecting, only while DevTools is open, and only through the standard DevTools API. Panel settings are kept by default (Remember my settings, on by default) in the browser's extension storage on your computer: preferences only (switches, views you last chose, text size, refresh rate), never any data, values, filters or calls. Untick Remember my settings to turn this off, which deletes them. Apart from that, the only other things kept are the order of the tabs, once you change it, flags that the short tours were seen, and the Mask values at start flag if you tick it (kept whether Remember my settings is on or off; unticking it deletes it). The OmniScript and its data are never changed.
+
+SUPPORT
+
+☕ Free to use. If it saves you an afternoon you can buy me a coffee: https://buycoffee.to/mskrz — entirely optional.
+
+YOUR RESPONSIBILITY
+
+Data you retrieve from your org is your responsibility. This is a viewer for data your Salesforce user can already see, and that data can include personal information, customer records and session tokens. Anything you save or export is an ordinary file on your machine, and where it goes next is your decision. Prefer a sandbox or scratch org when exploring or taking screenshots, turn on Mask values before sharing anything, and follow your organisation's policies and any applicable data protection law.

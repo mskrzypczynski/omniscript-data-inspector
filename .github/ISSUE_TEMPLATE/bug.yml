@@ -1,0 +1,71 @@
+name: Bug report
+description: Something in the panel is wrong, missing or confusing.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time. With the version, the package flavour, the **Copy report** text and the steps that show the problem, most reports can be reproduced without any back and forth.
+
+        Please do not paste real org data. Turn **Mask values** on before you copy or save anything: strings and numbers become placeholders, and the structure, keys and element names stay.
+
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+      description: At the bottom right of the panel, or on chrome://extensions.
+      placeholder: "2.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: flavour
+    attributes:
+      label: Package flavour
+      description: Which OmniStudio the org runs. The Type/SubType/Language of the script and the Open in Designer link depend on it.
+      options:
+        - Core OmniStudio
+        - Managed package (vlocity_cmt, vlocity_ins or vlocity_ps)
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: What you did and what happened
+      description: The tab you were on, the steps, what you expected and what you saw instead. A screenshot helps (check that it shows no real data).
+      placeholder: |
+        1. Opened the Structure tab on an OmniScript with a Set Values element.
+        2. Selected the element and opened Properties.
+        3. Expected the Set Values rows; saw an empty table.
+    validations:
+      required: true
+
+  - type: textarea
+    id: report
+    attributes:
+      label: Copy report
+      description: In the panel open Settings (the gear, or press `,`), press **Copy report** in the Tools row, and paste the text here. It names the script, the version, the step the script is on and what the tabs show.
+      render: markdown
+    validations:
+      required: true
+
+  - type: textarea
+    id: masked
+    attributes:
+      label: Masked data or calls (optional)
+      description: |
+        If the problem is in the data or in a call, turn **Mask values** on and paste a copy: in Data, **Export** → **Copy JSON**; in Calls, right-click the call and choose **Copy input**, or press **Export** and attach the file. Strings and numbers become placeholders; keys and element names stay, so look at it before you send it.
+      render: json
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Before you submit
+      options:
+        - label: Mask values was on when I copied the report and anything else here, and nothing here shows real data.
+          required: true

@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - name: Release check (versions agree, controls have help, the store text is current)
+        run: npm run release:check
+      - name: Kit check (src/kit is the synced copy, not edited by hand)
+        run: npm run kit:check
+      - run: npm test
+      - name: Package (also verifies manifest and package versions match)
+        run: npm run package
+      - name: Package for Firefox
+        run: npm run package -- free firefox
+      # Mozilla's linter, the check addons.mozilla.org runs on upload; a tool
+      # for this step only, not a dependency of the extension.
+      - name: Lint the Firefox build (web-ext)
+        run: npx --yes web-ext@10.8.0 lint --source-dir dist/free-firefox --warnings-as-errors
+
+  # Budgets for a 3 MB payload and a 500-call list. Separate from `npm test`
+  # so a slow runner never fails the unit tests; the limits are generous (10 s).
+  perf:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:perf
+
+  # The real panel in Chromium: the store screenshots must still match the ones
+  # committed in store/screenshots (a UI change regenerates them in the same
+  # PR), and axe-core must find no serious or critical violation in any tab in
+  # the light and dark themes.
+  visual:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # Playwright is a tool for this job, not a dependency of the extension
+      # (the same install as the release workflow).
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --global playwright@1.63.0
+          echo "NODE_PATH=$(npm root --global)" >> "$GITHUB_ENV"
+          npx --yes playwright@1.63.0 install --with-deps chromium
+
+      - name: Render the screenshots
+        run: |
+          mkdir -p "$RUNNER_TEMP/committed"
+          cp store/screenshots/*.png "$RUNNER_TEMP/committed/"
+          npm run screenshots
+
+      - name: Compare with the committed screenshots
+        env:
+          # Anti-aliasing differs a little between machines: one row of
+          # synthesized italic text is about 0.1% of a 1280x800 render. A
+          # moved row or a changed colour is far more than this.
+          SCREENSHOT_MAX_DIFF_RATIO: '0.002'
+        run: node scripts/compare-screenshots.mjs "$RUNNER_TEMP/committed" store/screenshots "$RUNNER_TEMP/screenshot-diffs"
+
+      - name: Accessibility (axe-core, every tab, light and dark)
+        if: ${{ !cancelled() }}
+        run: npm run a11y
+
+      # The rendered images are always kept: when the panel changed on purpose,
+      # download them from here and commit them as the new store/screenshots.
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: screenshots
+          path: store/screenshots/*.png
+      - uses: actions/upload-artifact@v4
+        if: ${{ failure() }}
+        with:
+          name: screenshot-diffs
+          path: ${{ runner.temp }}/screenshot-diffs/*.png
+          if-no-files-found: ignore

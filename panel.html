@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>OmniScript Data Inspector</title>
+  <link rel="stylesheet" href="panel.css" />
+</head>
+<body>
+  <header class="scope">
+    <label class="field" data-help="Top bar" title="Choose which OmniScript, and which frame, every tab reads.">
+      <span>OmniScript</span>
+      <select id="target"></select>
+    </label>
+    <button id="open-designer" data-help="Open in Designer" data-icon="external" class="icon-btn tiny" title="Open this OmniScript in its designer, in a new tab." hidden>Open in Designer</button>
+    <button id="rescan" data-help="Rescan" data-icon="rescan" class="icon-btn tiny" title="Look for OmniScripts and frames on the page again.">Rescan</button>
+    <span class="scope-break" aria-hidden="true"></span>
+    <label class="field checkbox mask-switch" data-help="Mask values" title="Replace strings and numbers with placeholders in everything that leaves the panel.">
+      <input id="mask-values" type="checkbox" />
+      <span class="label-full">Mask values</span><span class="label-short" aria-hidden="true">Mask</span>
+    </label>
+    <button id="settings" data-help="Settings" data-icon="gear" class="icon-btn tiny settings-btn" title="Change how the panel reads and shows things (,)" aria-expanded="false" aria-haspopup="dialog" aria-controls="settings-overlay">Settings</button>
+    <button id="help" class="icon-btn tiny help-btn" title="What this tab does, with shortcuts (h)" aria-expanded="false" aria-haspopup="dialog" aria-controls="help-overlay">?</button>
+    <div class="scope-extra">
+      <label class="field" data-help="Top bar" title="Choose which OmniScript, and which frame, every tab reads.">
+        <span>Frame</span>
+        <select id="frame" title="Limit the list to one document, or leave on All frames"></select>
+      </label>
+      <label class="field checkbox" data-help="Embedded scripts" title="Also list OmniScripts placed inside another one, and script components.">
+        <input id="show-nested" type="checkbox" />
+        <span>Embedded scripts</span>
+      </label>
+      <button id="select" data-help="Inspect element" data-icon="inspect" class="icon-btn tiny" title="Select the OmniScript's element in the Elements panel and keep it as $omni.">Inspect element</button>
+    </div>
+  </header>
+
+
+  <div class="tabrow">
+  <nav class="tabstrip" role="tablist" aria-label="Views">
+    <button id="tab-data" class="tab is-on" role="tab" aria-selected="true" aria-controls="view-data" tabindex="0" title="Data. Drag to reorder the tabs (or Alt+Shift+← / →)"><svg class="tab-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.5 2.5C4 2.5 4 3.5 4 5v1.2c0 .9-.6 1.6-1.5 1.8.9.2 1.5.9 1.5 1.8V11c0 1.5 0 2.5 1.5 2.5M10.5 2.5c1.5 0 1.5 1 1.5 2.5v1.2c0 .9.6 1.6 1.5 1.8-.9.2-1.5.9-1.5 1.8V11c0 1.5 0 2.5-1.5 2.5M6.8 6.8h2.4M6.8 9.2h2.4"/></svg><span class="tab-label">Data</span></button>
+    <button id="tab-structure" class="tab" role="tab" aria-selected="false" aria-controls="view-structure" tabindex="-1" title="Structure. Drag to reorder the tabs (or Alt+Shift+← / →)"><svg class="tab-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 3h4M3 3v10M5 8h4M5 13h4M3 8h2M3 13h2"/><rect x="9" y="6.5" width="4.5" height="3" rx=".8"/><rect x="9" y="11.5" width="4.5" height="3" rx=".8"/><rect x="7" y="1.5" width="4.5" height="3" rx=".8"/></svg><span class="tab-label">Structure</span></button>
+    <button id="tab-actions" class="tab" role="tab" aria-selected="false" aria-controls="view-actions" tabindex="-1" title="Calls the page makes. Drag to reorder the tabs (or Alt+Shift+← / →)">
+      <svg class="tab-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.5 5.5h10M10 3l2.5 2.5L10 8M13.5 10.5h-10M6 8l-2.5 2.5L6 13"/></svg><span class="tab-label">Calls</span> <span id="actions-count" class="badge" title="Calls in view; ✕ and the number of failed calls when any failed" hidden></span>
+    </button>
+  </nav>
+  </div>
+
+
+  <!-- ------------------------------------------------------ Data tab -->
+  <section id="view-data" class="view" role="tabpanel" aria-labelledby="tab-data">
+    <header class="toolbar">
+      <div class="bar">
+        <div class="seg" role="group" aria-label="View">
+          <button id="view-tree" data-help="Tree view" data-icon="tree" class="seg-btn icon-btn is-on" aria-pressed="true" title="Show the data as a collapsible tree, with line numbers that match Raw.">Tree</button>
+          <button id="view-form" data-help="Form view" data-icon="props" class="seg-btn icon-btn" aria-pressed="false" title="Show the data as the page's form: a label and a value for each key.">Form</button>
+          <button id="view-raw" data-help="Tree / Form / Raw" data-icon="raw" class="seg-btn icon-btn" aria-pressed="false" title="Show the page's own text, one entry per line, with the Tree's line numbers.">Raw</button>
+        </div>
+
+        <button id="refresh" data-help="Refresh" data-icon="refresh" class="icon-btn keep-label" title="Re-read the data of the selected script now.">Refresh</button>
+
+        <label class="field checkbox" data-help="Auto-refresh" title="Keep the data live: re-read it about once a second.">
+          <input id="live" type="checkbox" checked />
+          <span>Auto-refresh</span>
+        </label>
+
+
+        <input id="filter" data-help="Filter" type="search" aria-label="Filter keys and values" placeholder="Filter keys and values" title="Narrow the tree by text, a path such as Step:Rows|2:Field, key=value or a $ query. (/)" spellcheck="false" />
+
+        <button id="expand" data-help="Expand all / Collapse all" data-own-title data-icon="expand" data-overflow class="icon-btn" title="Open every branch of the Tree or Form">Expand all</button>
+        <button id="collapse" data-help="Expand all / Collapse all" data-own-title data-icon="collapse" data-overflow class="icon-btn" title="Close every branch to the top level">Collapse all</button>
+        <button id="data-export" data-help="Export data" data-icon="download" data-overflow class="icon-btn" aria-haspopup="menu" aria-expanded="false" title="Copy the data as JSON or save it to a file. Honours Mask values.">Export</button>
+      </div>
+
+    </header>
+
+
+    <main id="viewport" class="viewport" tabindex="0"></main>
+  </section>
+
+  <!-- ------------------------------------------------- Structure tab -->
+  <section id="view-structure" class="view" role="tabpanel" aria-labelledby="tab-structure" hidden>
+    <header class="toolbar">
+      <div class="bar">
+        <button id="struct-refresh" data-help="Refresh" data-icon="refresh" class="icon-btn keep-label" title="Read the definition and custom labels again; your selection and folds stay.">Refresh</button>
+        <button id="struct-current" data-help="Current step" data-icon="target" class="icon-btn keep-label" title="Select and scroll to the step the OmniScript is on now.">Current step</button>
+
+        <label class="field checkbox" data-help="Follow current step" title="Keep the step the script is on selected as it moves on.">
+          <input id="struct-follow" type="checkbox" checked />
+          <span>Follow current step</span>
+        </label>
+
+        <input id="struct-filter" data-help="Filter" type="search" aria-label="Filter elements" placeholder="Filter elements" title="Find elements by name, type, label or label text. (/)" spellcheck="false" />
+
+
+        <button id="struct-view" data-help="View" class="icon-btn menu-btn" aria-haspopup="menu" aria-expanded="false" title="Switches that narrow the list or change how it behaves."><span>View</span><span class="menu-count" hidden></span></button>
+
+        <button id="struct-expand" data-help="Sections" data-own-title data-icon="expand" class="icon-btn icon-only" title="Open every section of the list">Expand all</button>
+        <button id="struct-collapse" data-help="Sections" data-own-title data-icon="collapse" class="icon-btn icon-only" title="Fold the list to the top level">Collapse all</button>
+
+      </div>
+    </header>
+
+    <div class="split">
+      <div id="struct-list" class="log-list"></div>
+      <div id="struct-detail" class="log-detail"></div>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------- Calls tab -->
+  <section id="view-actions" class="view" role="tabpanel" aria-labelledby="tab-actions" hidden>
+    <header class="toolbar">
+      <div class="bar">
+        <button id="log-record" data-help="Recording / Paused" data-icon="dot" class="icon-btn is-recording" aria-pressed="true" aria-label="Recording" title="Capture calls, or pause capturing; click to switch.">Recording</button>
+        <button id="log-clear" data-help="Clear list" data-icon="clear" class="icon-btn" title="Remove every captured call from the list.">Clear list</button>
+
+        <input id="log-filter" data-help="Filter box" type="search" aria-label="Filter calls" placeholder="Filter calls (try in: or slow:)" title="Narrow the calls by name, or with a prefix such as in: or url:. (/)" spellcheck="false" />
+
+        <label class="field checkbox" data-help="Failed only" title="Show only the calls the row marks as failed.">
+          <input id="log-errors-only" type="checkbox" />
+          <span>Failed only</span>
+        </label>
+        <button id="log-export" data-overflow data-help="Export calls" data-icon="download" class="icon-btn" title="Write the selected calls, or the visible ones, to a JSON file.">Export</button>
+      </div>
+    </header>
+
+    <div id="log-notes"></div>
+
+
+    <div class="split">
+      <div id="log-list" class="log-list"></div>
+      <div id="log-detail" class="log-detail"></div>
+    </div>
+  </section>
+
+  <div id="help-overlay" class="help-overlay" hidden>
+    <div class="help-card" role="dialog" aria-modal="true" aria-label="Help" tabindex="-1">
+      <button id="help-close" class="icon-btn tiny help-close" title="Close (Esc)">✕</button>
+      <input id="help-search" class="help-search" type="search" placeholder="Filter help…" aria-label="Filter help" title="Show only the entries and shortcuts that contain every word you type" autocomplete="off" />
+      <div id="help-body"></div>
+    </div>
+  </div>
+
+  <div id="settings-overlay" class="help-overlay settings-overlay" hidden>
+    <div class="help-card settings-card" role="dialog" aria-modal="true" aria-labelledby="settings-title" tabindex="-1">
+      <button id="settings-close" class="icon-btn tiny help-close" title="Close (Esc)">✕</button>
+      <h2 id="settings-title" class="settings-title">Settings</h2>
+      <div id="settings-body"></div>
+    </div>
+  </div>
+
+
+  <footer class="status">
+    <span id="status-live" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
+    <span id="status-left">Looking for OmniScripts…</span>
+    <span id="status-right"></span>
+    <span id="status-mask" class="tag tag-info status-chip" hidden title="Mask values is on: copies, files and exports hold placeholders, not strings and numbers">Masking copies and exports</span>
+    <span class="status-meta">
+      <span id="status-version" class="status-version" title="Extension version" hidden></span>
+      <button type="button" id="status-coffee" class="status-coffee" title="Buy me a coffee: optional. Opens buycoffee.to in a new tab."><span aria-hidden="true">☕</span><span class="status-coffee-text"> Buy me a coffee</span></button>
+    </span>
+  </footer>
+
+  <!-- Real ES modules: app.js imports everything it needs (src/ui/*, which in
+       turn imports src/core/*), so the browser's module graph resolves the
+       load order instead of this list having to get it right by hand. -->
+  <script type="module" src="src/ui/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+{
+  "_": "Controls of the top bar and the toolbars that have no data-help yet, each with why. npm run release:check fails for a control that is missing here and has no data-help, and for one listed here that has gained a data-help: remove it.",
+  "controlsWithoutHelp": {
+    "help": "The help button itself: it opens the help, which has no entry about it"
+  }
+}

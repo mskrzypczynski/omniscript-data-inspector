@@ -1,0 +1,25 @@
+{
+  "_": "Violations npm run a11y does not fail on, each with why. A false positive or a by-design choice stays here for good; a known issue stays until it is fixed, and then its entry goes. An entry matches its rule on a node whose target contains the selector.",
+  "allow": [
+    {
+      "rule": "aria-required-children",
+      "selector": "#struct-list",
+      "reason": "By design: the Element column header is a real button (it opens the legend of the list's marks) and sits in the list, which is a tree, so its keyboard users can reach it; a tree may not hold a button for axe, and moving it out of the scrolling list would break the pinned header"
+    },
+    {
+      "rule": "color-contrast",
+      "selector": ".el-name",
+      "reason": "By design: elements the rules hide, or the script has not reached, are drawn dimmed (opacity) so they read as inactive"
+    },
+    {
+      "rule": "color-contrast",
+      "selector": "span[title=\"Review",
+      "reason": "By design: elements the rules hide, or the script has not reached, are drawn dimmed (opacity) so they read as inactive (the demo script's Review step, not yet reached)"
+    },
+    {
+      "rule": "color-contrast",
+      "selector": ".diff-hl",
+      "reason": "Known, older than the Debug views: the tinted highlight on the changed span of a Compare line (shared by Compare data, Changes and the Calls comparison) is a little under 4.5:1 for the green and red text in the light theme and in places in the dark one. It stays until the highlight is drawn another way (an underline, or a tint the text colour clears)"
+    }
+  ]
+}

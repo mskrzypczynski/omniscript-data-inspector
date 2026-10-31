@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: How the panel works (the help)
+    url: https://mskrzypczynski.github.io/omniscript-data-inspector/
+    about: What each tab and control does, the shortcuts and the privacy policy. The same help is in the panel itself, under the ? button.

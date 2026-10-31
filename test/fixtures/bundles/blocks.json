@@ -1,0 +1,81 @@
+{
+  "generatedAt": "2025-02-03T09:15:00.000Z",
+  "extensionVersion": null,
+  "masked": false,
+  "note": "Written by hand with invented names to cover Block, Edit Block, Set Errors, Messaging, Custom LWC, Formula a repeat Block with a row that lacks a field and a show rule that differs per row, a Block inside a Block, two elements a custom component overrides (written both ways), and a multi-language header; not saved from an org.",
+  "script": {
+    "key": "Quote/Intake/Multi-Language",
+    "label": "c-omniscript-quote-intake",
+    "frame": ""
+  },
+  "step": {
+    "key": "/Cover#12",
+    "name": "Cover",
+    "asIndex": 1,
+    "visits": []
+  },
+  "payload": {
+    "prop": "jsonDataStr",
+    "value": {
+      "ContextId": "a0Xtest0000000001",
+      "Applicant": {
+        "FullName": "Alex Example",
+        "Age": 41,
+        "Nickname": "Lex",
+        "Consent": false,
+        "Dependants": [
+          {
+            "DepName": "Robin Example",
+            "DepAge": 9,
+            "DepEmail": "robin@example.com",
+            "DepGuardian": "Pat Example"
+          },
+          {
+            "DepName": "",
+            "DepAge": 12,
+            "DepEmail": "blank@example.com"
+          },
+          {
+            "DepName": "Sam Example",
+            "DepAge": 15
+          }
+        ],
+        "Vehicles": [
+          {
+            "Plate": ""
+          }
+        ],
+        "Policies": [
+          {
+            "Riders": [
+              {
+                "RiderName": "Home"
+              },
+              {
+                "RiderName": ""
+              }
+            ]
+          },
+          {
+            "Riders": [
+              {
+                "RiderName": "Car"
+              }
+            ]
+          }
+        ]
+      },
+      "Cover": {
+        "Plan": "Basic"
+      }
+    },
+    "readAt": "2025-02-03T09:15:00.000Z"
+  },
+  "definition": {
+    "elementCount": 0,
+    "raw": "{\"bpType\":\"Quote\",\"bpSubType\":\"Intake\",\"bpLang\":\"Multi-Language\",\"asIndex\":1,\"children\":[{\"name\":\"Applicant\",\"type\":\"Step\",\"indexInParent\":0,\"propSetMap\":{\"label\":\"CL_ApplicantStep\",\"nextLabel\":\"CL_Next\"},\"children\":[{\"eleArray\":[{\"name\":\"FullName\",\"type\":\"Text\",\"indexInParent\":0,\"propSetMap\":{\"label\":\"CL_FullName\",\"required\":true},\"JSONPath\":\"Applicant:FullName\"},{\"name\":\"Age\",\"type\":\"Number\",\"indexInParent\":1,\"propSetMap\":{\"label\":\"CL_Age\"},\"JSONPath\":\"Applicant:Age\"},{\"name\":\"Nickname\",\"type\":\"Text\",\"indexInParent\":2,\"propSetMap\":{\"label\":\"CL_Nickname\"},\"JSONPath\":\"Applicant:Nickname\"},{\"name\":\"AgeDouble\",\"type\":\"Formula\",\"indexInParent\":3,\"propSetMap\":{\"label\":\"CL_AgeDouble\",\"expression\":\"%Age% * 2\"},\"JSONPath\":\"Applicant:AgeDouble\"},{\"name\":\"SeniorNote\",\"type\":\"Text Block\",\"indexInParent\":4,\"propSetMap\":{\"textKey\":\"CL_SeniorNote\",\"show\":{\"group\":{\"operator\":\"AND\",\"rules\":[{\"field\":\"AgeDouble\",\"condition\":\">\",\"data\":100}]}}}},{\"name\":\"ExistingCover\",\"type\":\"Text\",\"indexInParent\":5,\"propSetMap\":{\"label\":\"CL_ExistingCover\",\"required\":true,\"show\":{\"group\":{\"operator\":\"AND\",\"rules\":[{\"field\":\"AgeDouble\",\"condition\":\">\",\"data\":100}]}}},\"JSONPath\":\"Applicant:ExistingCover\"},{\"name\":\"Dependants\",\"type\":\"Block\",\"indexInParent\":6,\"propSetMap\":{\"label\":\"CL_Dependants\",\"repeat\":true,\"repeatLimit\":5},\"JSONPath\":\"Applicant:Dependants\",\"children\":[{\"eleArray\":[{\"name\":\"DepName\",\"type\":\"Text\",\"indexInParent\":0,\"propSetMap\":{\"label\":\"CL_DepName\",\"required\":true},\"JSONPath\":\"Applicant:Dependants|1:DepName\"},{\"name\":\"DepAge\",\"type\":\"Number\",\"indexInParent\":1,\"propSetMap\":{\"label\":\"CL_DepAge\"},\"JSONPath\":\"Applicant:Dependants|1:DepAge\"},{\"name\":\"DepEmail\",\"type\":\"Text\",\"indexInParent\":2,\"propSetMap\":{\"label\":\"CL_DepEmail\",\"required\":true},\"JSONPath\":\"Applicant:Dependants|1:DepEmail\"},{\"name\":\"DepGuardian\",\"type\":\"Text\",\"indexInParent\":3,\"propSetMap\":{\"label\":\"CL_DepGuardian\",\"required\":true,\"show\":{\"group\":{\"operator\":\"AND\",\"rules\":[{\"field\":\"DepAge\",\"condition\":\"<\",\"data\":10}]}}},\"JSONPath\":\"Applicant:Dependants|1:DepGuardian\"}]}]},{\"name\":\"Vehicles\",\"type\":\"Edit Block\",\"indexInParent\":7,\"propSetMap\":{\"label\":\"CL_Vehicles\"},\"JSONPath\":\"Applicant:Vehicles\",\"children\":[{\"eleArray\":[{\"name\":\"Plate\",\"type\":\"Text\",\"indexInParent\":0,\"propSetMap\":{\"label\":\"CL_Plate\",\"required\":true},\"JSONPath\":\"Applicant:Vehicles|1:Plate\"}]}]},{\"name\":\"Policies\",\"type\":\"Block\",\"indexInParent\":8,\"propSetMap\":{\"label\":\"CL_Policies\",\"repeat\":true},\"JSONPath\":\"Applicant:Policies\",\"children\":[{\"eleArray\":[{\"name\":\"Riders\",\"type\":\"Block\",\"indexInParent\":0,\"propSetMap\":{\"label\":\"CL_Riders\",\"repeat\":true},\"JSONPath\":\"Applicant:Policies|1:Riders\",\"children\":[{\"eleArray\":[{\"name\":\"RiderName\",\"type\":\"Text\",\"indexInParent\":0,\"propSetMap\":{\"label\":\"CL_RiderName\",\"required\":true},\"JSONPath\":\"Applicant:Policies|1:Riders|1:RiderName\"}]}]}]}]},{\"name\":\"Consent\",\"type\":\"Checkbox\",\"indexInParent\":9,\"propSetMap\":{\"label\":\"CL_Consent\",\"required\":true},\"JSONPath\":\"Applicant:Consent\"},{\"name\":\"AgeCheck\",\"type\":\"Set Errors\",\"indexInParent\":10,\"propSetMap\":{\"show\":{\"group\":{\"operator\":\"AND\",\"rules\":[{\"field\":\"Age\",\"condition\":\"<\",\"data\":18}]}},\"elementErrorMap\":{\"Age\":\"CL_AgeTooLow\"}},\"bSetErrors\":true},{\"name\":\"AlwaysCheck\",\"type\":\"Set Errors\",\"indexInParent\":11,\"propSetMap\":{\"elementErrorMap\":{\"FullName\":\"CL_NameCheck\"}},\"bSetErrors\":true},{\"name\":\"ConsentNotice\",\"type\":\"Messaging\",\"indexInParent\":12,\"propSetMap\":{\"validateExpression\":{\"operator\":\"AND\",\"rules\":[{\"field\":\"Consent\",\"condition\":\"=\",\"data\":\"true\"}]},\"messages\":[{\"messageType\":\"Requirement\",\"message\":\"CL_ConsentNeeded\",\"value\":false,\"active\":true},{\"messageType\":\"Info\",\"message\":\"CL_Thanks\",\"value\":true,\"active\":true}]},\"bMessaging\":true},{\"name\":\"RiskWidget\",\"type\":\"Custom Lightning Web Component\",\"indexInParent\":13,\"propSetMap\":{\"show\":{\"group\":{\"operator\":\"AND\",\"rules\":[{\"field\":\"Age\",\"condition\":\">\",\"data\":17}]}}},\"lwcName\":\"quoteRiskWidget\"},{\"name\":\"PostcodeLookup\",\"type\":\"Text\",\"indexInParent\":14,\"propSetMap\":{\"lwcComponentOverride\":\"c-postcode-lookup\"},\"JSONPath\":\"Applicant:PostcodeLookup\"},{\"name\":\"NewsletterToggle\",\"type\":\"Checkbox\",\"indexInParent\":15,\"propSetMap\":{\"lwcOverride\":\"newsletterToggle\"},\"JSONPath\":\"Applicant:NewsletterToggle\"}]}]},{\"name\":\"Cover\",\"type\":\"Step\",\"indexInParent\":1,\"propSetMap\":{\"label\":\"CL_CoverStep\"},\"children\":[{\"eleArray\":[{\"name\":\"Plan\",\"type\":\"Select\",\"indexInParent\":0,\"propSetMap\":{\"label\":\"CL_Plan\",\"required\":true,\"options\":[{\"name\":\"Basic\",\"value\":\"CL_OptBasic\"},{\"name\":\"Plus\",\"value\":\"CL_OptPlus\"}]},\"JSONPath\":\"Cover:Plan\"},{\"name\":\"Excess\",\"type\":\"Number\",\"indexInParent\":1,\"propSetMap\":{\"label\":\"CL_Excess\"},\"JSONPath\":\"Cover:Excess\"}]}]},{\"name\":\"PriceQuote\",\"type\":\"Integration Procedure Action\",\"indexInParent\":2,\"propSetMap\":{\"integrationProcedureKey\":\"Quote_Price\",\"sendJSONPath\":\"Applicant\",\"responseJSONNode\":\"QuoteResult\",\"failureNextStep\":\"Applicant\",\"extraPayload\":{\"channel\":\"web\"}}}]}",
+    "headerRaw": "{\"bpLang\":\"Multi-Language\",\"allCustomLabels\":{\"CL_ApplicantStep\":\"Applicant\",\"CL_Next\":\"Next\",\"CL_FullName\":\"Full name\",\"CL_Age\":\"Age\",\"CL_AgeDouble\":\"Age doubled\",\"CL_SeniorNote\":\"Please tell us about any cover you already hold.\",\"CL_Dependants\":\"Dependants\",\"CL_DepName\":\"Dependant name\",\"CL_DepAge\":\"Dependant age\",\"CL_Vehicles\":\"Vehicles\",\"CL_Plate\":\"Plate\",\"CL_Consent\":\"I agree to the terms\",\"CL_AgeTooLow\":\"You must be an adult\",\"CL_NameCheck\":\"Check the name\",\"CL_ConsentNeeded\":\"Please accept the terms\",\"CL_Thanks\":\"Thank you\",\"CL_CoverStep\":\"Cover\",\"CL_Plan\":\"Plan\",\"CL_Excess\":\"Excess\",\"CL_OptBasic\":\"Basic cover\",\"CL_OptPlus\":\"Plus cover\",\"CL_ExistingCover\":\"Existing cover\",\"CL_DepEmail\":\"Dependant email\",\"CL_DepGuardian\":\"Guardian\",\"CL_Policies\":\"Policies\",\"CL_Riders\":\"Riders\",\"CL_RiderName\":\"Rider name\"}}"
+  },
+  "calls": [],
+  "tabs": {}
+}

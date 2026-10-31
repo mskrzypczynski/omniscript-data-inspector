@@ -1,0 +1,20 @@
+{
+  "captions": {
+    "data": { "lead": "Data", "text": "The live data of your OmniScript, in DevTools" },
+    "branch": { "lead": "Data", "text": "Open any branch of the tree" },
+    "filter": { "lead": "Data", "text": "Filter keys and values" },
+    "views": { "lead": "Data", "text": "The same data as a Tree, a Form or Raw text" },
+    "structure": { "lead": "Structure", "text": "Every element of the script, joined to the data" },
+    "hidden": { "lead": "Structure", "text": "Hidden? Visibility says which rule hides it, and why" },
+    "showInData": { "lead": "Structure", "text": "Follow the rule to its field, then Show in Data" },
+    "calls": { "lead": "Calls", "text": "Every Data Mapper and Integration Procedure call" },
+    "failed": { "lead": "Calls", "text": "Failed calls flagged, even inside a successful response" },
+    "detail": { "lead": "Calls", "text": "The error, Input and Output, one click away" },
+    "theme": { "lead": "Light and dark", "text": "Follows the DevTools theme" }
+  },
+  "end": {
+    "name": "OmniScript Data Inspector",
+    "line": "Free · Runs in your browser · Open source (GPL-3.0)",
+    "store": "Chrome Web Store"
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "name": "omniscript-data-inspector",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Chrome DevTools panel for inspecting Salesforce OmniStudio OmniScripts.",
+  "license": "GPL-3.0-only",
+  "scripts": {
+    "test": "NODE_OPTIONS=--max-old-space-size=3072 node --experimental-vm-modules node_modules/.bin/jest",
+    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "package": "node scripts/package-extension.mjs",
+    "screenshots": "node scripts/screenshots.mjs",
+    "marketing": "node scripts/marketing.mjs",
+    "promo-video": "node scripts/promo-video.mjs",
+    "bump": "node scripts/bump-version.mjs",
+    "release:check": "node scripts/release-check.mjs",
+    "kit:check": "node scripts/kit/check.mjs",
+    "a11y": "node scripts/a11y-check.mjs",
+    "docs": "node scripts/docs.mjs",
+    "test:perf": "node --experimental-vm-modules node_modules/.bin/jest --config jest.perf.config.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "axe-core": "^4.14.0",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "jest": "^30.5.1",
+    "jest-environment-jsdom": "^30.5.1",
+    "jsdom": "^26.1.0",
+    "pixelmatch": "^7.2.0",
+    "pngjs": "^7.0.0"
+  }
+}
