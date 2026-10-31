@@ -56,8 +56,6 @@ HOW TO USE IT
 
 If the OmniScript renders inside an iframe, including the OmniScript Designer preview, it is found automatically. Closed shadow roots and cross-origin frames cannot be read; that is a browser restriction rather than a limit of the panel.
 
-Want to record the steps you keep repeating and replay them? That is OmniScript Replay, a separate extension from the same author.
-
 PRIVACY
 
 🔒 Runs entirely in your browser, and your org data stays with you. It asks for only the storage permission, and for no host access.
@@ -66,7 +64,7 @@ The extension reads the page you are already inspecting, only while DevTools is 
 
 SUPPORT
 
-☕ Free to use. If it saves you an afternoon you can buy me a coffee: https://buycoffee.to/mskrz — entirely optional.
+☕ If it saves you an afternoon you can buy me a coffee: https://buycoffee.to/mskrz — entirely optional.
 
 YOUR RESPONSIBILITY
 

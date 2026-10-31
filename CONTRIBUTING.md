@@ -2,11 +2,7 @@
 
 OmniScript Data Inspector is a Chrome DevTools panel (Manifest V3) for
 inspecting Salesforce OmniStudio OmniScripts. It has three tabs: **Data**,
-**Structure** and **Calls**. Replay, which recorded and replayed a
-tester's steps, moved to its own extension, OmniScript Replay
-(`mskrzypczynski/omniscript-replay`), which started from this repository's
-top bar, JSON tree and settings code. README.md covers what it does for
-users.
+**Structure** and **Calls**. README.md covers what it does for users.
 
 This file holds the engineering rules of the project: what the architecture is, what every change needs, how it is checked and how a release is made.
 
@@ -44,9 +40,7 @@ This file holds the engineering rules of the project: what the architecture is, 
   `src/ui/help/`, one module per tab. Shared widgets (JSON tree, top bar
   `targets.js`, toast, context menu, clipboard) stay at the top level of
   `src/ui/`. A redraw that should do nothing when nothing changed uses
-  `memoDraw` (`src/ui/memo-draw.js`). OmniScript Replay keeps
-  copies of the top bar, JSON tree and settings: port a fix to them there
-  too.
+  `memoDraw` (`src/ui/memo-draw.js`).
 - Tabs talk to each other through `nav.js` (jumps) and `shared.js` (shared
   definition), not by importing each other's internals.
 - **Feature gates.** Some controls, help entries and menu items are drawn

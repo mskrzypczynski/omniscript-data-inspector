@@ -26,9 +26,6 @@ other Chromium browsers, and in Firefox:
   options and output, and Show raw shows a request exactly as the page sent
   it.
 
-Replay, which records and replays the steps of a script, is an extension
-of its own: [OmniScript Replay](https://github.com/mskrzypczynski/omniscript-replay).
-
 The tabs link to each other (Show in Data / Show in Structure, a Calls tab per
 element), explain why an element is hidden, and can mask values before
 anything is copied or exported. Click `?` in the panel, or press `h`, for
